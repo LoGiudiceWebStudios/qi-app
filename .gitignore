@@ -1,0 +1,30 @@
+# Globale & IDEs
+.env
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Backend: Go
+/backend/bin/
+/backend/vendor/
+/backend/*.exe
+/backend/*.test
+/backend/*.out
+
+# Frontend: Flutter & Dart
+/frontend/.dart_tool/
+/frontend/.packages
+/frontend/build/
+/frontend/.flutter-plugins
+/frontend/.flutter-plugins-dependencies
+/frontend/ios/Pods/
+/frontend/ios/.symlinks/
+/frontend/ios/Flutter/Flutter.framework/
+/frontend/ios/Flutter/Flutter.podspec
+/frontend/android/app/build/
+/frontend/android/.gradle/
+/frontend/macos/Flutter/ephemeral/
+/frontend/windows/flutter/ephemeral/
+/frontend/linux/flutter/ephemeral/
+*.iml
