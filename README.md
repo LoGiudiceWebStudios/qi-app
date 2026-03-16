@@ -1,22 +1,20 @@
-## QI Food&Focus Mobile App 
+# QI App Monorepo
 
-# Accesso DB: 
-	localhost:5432
-	User: admin
-	Password: admin
-	Accesso pgAdmin: http://localhost:5050
 
-# Avvio Rapido Infrastruttura
-Esegui `docker-compose up -d` dalla root per avviare il database.
+# Database
 
-# Avvio Backend 
+docker compose up -d db
 
-cd backend
+# Backend
+
+cd backend/
 go mod tidy
 go run cmd/api/main.go
 
-#Avvio Frontend
+verifica: curl http://localhost:8080/api/v1/ping
 
-cd frontend
+# Frontend
+
+cd frontend/
 flutter pub get
-flutter run 
+flutter run
