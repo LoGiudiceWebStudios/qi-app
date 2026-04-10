@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/pages/home_page.dart';
 
 void main() {
-  runApp(const QiApp());
+  runApp(
+    const ProviderScope(
+      child: QiApp(),
+    ),
+  );
 }
 
 class QiApp extends StatelessWidget {
@@ -14,8 +19,8 @@ class QiApp extends StatelessWidget {
     return MaterialApp(
       title: 'QI App',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme, // Usiamo il tema scuro come in Directa
-      home: const HomePage(),
+      theme: AppTheme.darkTheme,
+      home: HomePage(),
     );
   }
 }
