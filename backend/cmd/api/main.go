@@ -9,6 +9,7 @@ import (
 	"qi-backend/internal/database"
 	"qi-backend/internal/handlers"
 	"qi-backend/internal/handlers/admin"
+	"qi-backend/internal/models"
 	"qi-backend/internal/services"
 )
 
@@ -17,9 +18,24 @@ func main() {
 	log.Println("Inizializzazione del database...")
 	database.Connect()
 
+	// Inserimento utente fittizio per il test del Login
+	var checkUser models.User
+	if err := database.DB.Where("email = ?", "test@qiapp.com").First(&checkUser).Error; err != nil {
+		testUser := models.User{
+			Nome:     "Mario",
+			Cognome:  "Rossi",
+			Email:    "test@qiapp.com",
+			Password: "password123", // in test, no hash
+		}
+		database.DB.Create(&testUser)
+		log.Println("Utente fittizio creato: test@qiapp.com / password123")
+	}
+
 	// 1. Inizializzo service e handlers (Dependency Injection)
 	homeService := services.NewHomeService()
 	homeHandler := handlers.NewHomeHandler(homeService)
+	authService := services.NewAuthService()
+	authHandler := handlers.NewAuthHandler(authService)
 	adminDashboardHandler := admin.NewDashboardHandler()
 	adminEventsHandler := admin.NewEventsHandler()
 
@@ -42,6 +58,10 @@ func main() {
 	// 4. Configurazione Gruppi di Rotte REST API (JSON)
 	api := router.Group("/api/v1")
 	{
+		// Rotte Auth
+		api.POST("/auth/login", authHandler.Login)
+		api.POST("/auth/signup", authHandler.SignUp)
+
 		// Rotte pubbliche per Flutter
 		api.GET("/home", homeHandler.GetHomeData)
 		api.GET("/events", handlers.GetEvents)
