@@ -1,0 +1,58 @@
+{{ define "layout_top" }}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Title }}</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+
+<!-- Inizio Wrapper Principale -->
+<div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar Logica -->
+    <aside class="w-64 bg-gray-900 text-white flex flex-col hidden md:flex">
+        <div class="h-16 flex items-center justify-center border-b border-gray-800 font-bold text-xl uppercase tracking-wider text-green-400">
+            Qi Backend
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+            <a href="/admin" class="flex items-center gap-2 px-3 py-2 rounded transition-colors hover:bg-gray-800 hover:text-green-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                Dashboard
+            </a>
+            <a href="/admin/events" class="flex items-center gap-2 px-3 py-2 rounded transition-colors hover:bg-gray-800 text-gray-400 hover:text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                Eventi
+            </a>
+            <!-- Aggiungi qui Utenti, Offerte etc.. -->
+        </nav>
+    </aside>
+
+    <!-- Contenuto Principale -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+        
+        <!-- Header -->
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center px-6 justify-between flex-shrink-0">
+            <div class="font-semibold text-xl text-gray-700">{{ .Title }}</div>
+            <div class="text-sm text-gray-500 cursor-pointer hover:text-gray-800">
+                Logout
+            </div>
+        </header>
+
+        <!-- Area Contenuto Interno (scrollable) -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+{{ end }}
+
+{{ define "layout_bottom" }}
+        </main>
+    </div> <!-- fine content -->
+</div> <!-- fine wrapper -->
+
+</body>
+</html>
+{{ end }}

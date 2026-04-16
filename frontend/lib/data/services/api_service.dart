@@ -5,10 +5,16 @@ import 'package:flutter/foundation.dart';
 
 class ApiService {
   // Risolve automaticamente l'URL in base al dispositivo in uso
+  static String get serverUrl {
+    // Prova a usare 10.0.2.2 per l'emulatore Android, altrimenti localhost
+    if (kIsWeb) return 'http://localhost:9090';
+    if (Platform.isAndroid) return 'http://192.168.1.110:9090';
+    // Se stai usando un dispositivo fisico, potresti dover usare il tuo indirizzo IP locale, ad es: 'http://192.168.1.X:9090'
+    return 'http://localhost:9090'; // iOS e altri
+  }
+
   static String get baseUrl {
-    if (kIsWeb) return 'http://localhost:8080/api/v1';
-    if (Platform.isAndroid) return 'http://10.0.2.2:8080/api/v1';
-    return 'http://localhost:8080/api/v1'; // iOS e altri
+    return '$serverUrl/api/v1';
   }
 
   // Chiamata di test al nostro endpoint Go

@@ -1,1075 +1,389 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../widgets/custom_card_widget.dart';
+import '../../data/api/event_api.dart';
+import '../../data/models/event_model.dart';
 
-class HomePage extends StatelessWidget {
+import '../../data/services/api_service.dart';
+
+// Modelli Dati fittizi per offerta, la parte EventModel la rimuoviamo perché la leggiamo dal backend
+
+class OfferModel {
+  final String id;
+  final String title;
+  final String? imageUrl;
+  OfferModel({required this.id, required this.title, this.imageUrl});
+}
+
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  // Colori come richiesto
+  final Color greenColor = const Color(0xFF008F30);
+  final Color yellowColor = const Color(0xFFE9B416);
+  final Color purpleColor = const Color(0xFFc084fc); // Preso dal mockup originale
+  
+  // Future per caricare gli eventi dal Backend
+  late Future<List<Event>> _eventsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _eventsFuture = EventApi().fetchEvents();
+  }
+
+  final List<OfferModel> offers = [
+    OfferModel(id: '1', title: 'Offerta 1'),
+    OfferModel(id: '2', title: 'Offerta 2'),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFAFBFA), // Sfondo chiaro
       body: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: MediaQuery.of(context).size.width,
-              height: 1544,
-              decoration: BoxDecoration(color: const Color(0xFFFBFBF5)),
-              child: Stack(
+            // TOP SECTION: Header con Immagine e Card Fluttuante
+            _buildTopHeader(context),
+            
+            const SizedBox(height: 32),
+
+            // QUICK ACTION
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Positioned(
-                    left: 0,
-                    top: 0,
-                    child: Container(
-                      width: 390,
-                      height: 422,
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            left: 0,
-                            top: 0,
-                            child: Container(
-                              width: 390,
-                              height: 421.50,
-                              clipBehavior: Clip.antiAlias,
-                              decoration: BoxDecoration(),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Container(
-                                      width: double.infinity,
-                                      clipBehavior: Clip.antiAlias,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(32),
-                                        image: const DecorationImage(
-                                          image: AssetImage(
-                                            'assets/images/DeliciousBurger.png',
-                                          ),
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                      child: Stack(),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            left: 0,
-                            top: 36,
-                            child: Container(
-                              width: 390,
-                              height: 422,
-                              child: Stack(
-                                children: [
-                                  Positioned(
-                                    left: 26,
-                                    top: 20,
-                                    child: Container(
-                                      width: 43,
-                                      height: 43,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(32),
-                                      ),
-                                      clipBehavior: Clip.antiAlias,
-                                      child: SvgPicture.asset(
-                                        'assets/icons/Logo.svg',
-                                        width: 43,
-                                        height: 43,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    left: 75,
-                                    top: 21,
-                                    child: SizedBox(
-                                      width: 186,
-                                      height: 41,
-                                      child: Text(
-                                        'Qi - food & focus',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 20,
-                                          fontFamily: 'Syne',
-                                          fontWeight: FontWeight.w700,
-                                          height: 3.60,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            left: 24,
-                            top: 292.50,
-                            child: Container(
-                              width: 342.68,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    width: 342,
-                                    height: 105,
-                                    decoration: ShapeDecoration(
-                                      color: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        side: BorderSide(
-                                          width: 2,
-                                          color: const Color(0xFFF59E0B),
-                                        ),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      shadows: [
-                                        BoxShadow(
-                                          color: Color(0xFF000000),
-                                          blurRadius: 0,
-                                          offset: Offset(4, 4),
-                                          spreadRadius: 0,
-                                        )
-                                      ],
-                                    ),
-                                    child: Stack(
-                                      children: [
-                                        Positioned(
-                                          left: 19,
-                                          top: 49,
-                                          child: Container(
-                                            width: 306,
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Expanded(
-                                                  child: Container(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 8),
-                                                    child: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .start,
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .center,
-                                                      children: [
-                                                        Container(
-                                                          width:
-                                                              double.infinity,
-                                                          child: Column(
-                                                            mainAxisSize:
-                                                                MainAxisSize
-                                                                    .min,
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .start,
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .center,
-                                                            children: [
-                                                              SizedBox(
-                                                                width: 106,
-                                                                height: 28,
-                                                                child: Text(
-                                                                  'Dove Siamo',
-                                                                  textAlign:
-                                                                      TextAlign
-                                                                          .center,
-                                                                  style:
-                                                                      TextStyle(
-                                                                    color: const Color(
-                                                                        0xFF10B981),
-                                                                    fontSize:
-                                                                        15,
-                                                                    fontFamily:
-                                                                        'Syne',
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w700,
-                                                                    height:
-                                                                        1.87,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                        SizedBox(
-                                                          width: 100,
-                                                          height: 16,
-                                                          child: Text(
-                                                            'Via Luigi Enaudi',
-                                                            textAlign: TextAlign
-                                                                .center,
-                                                            style: TextStyle(
-                                                              color: const Color(
-                                                                  0xFF6B7280),
-                                                              fontSize: 12,
-                                                              fontFamily:
-                                                                  'Syne',
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w400,
-                                                              height: 1.33,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            left: 12, right: 8),
-                                                    decoration: ShapeDecoration(
-                                                      shape:
-                                                          RoundedRectangleBorder(
-                                                        side: BorderSide(
-                                                          width: 2,
-                                                          color: const Color(
-                                                              0xFFF3F4F6),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    child: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .start,
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .center,
-                                                      children: [
-                                                        Container(
-                                                          width:
-                                                              double.infinity,
-                                                          child: Column(
-                                                            mainAxisSize:
-                                                                MainAxisSize
-                                                                    .min,
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .start,
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .center,
-                                                            children: [
-                                                              SizedBox(
-                                                                width: 150,
-                                                                height: 28,
-                                                                child: Text(
-                                                                  'Prossimo evento',
-                                                                  textAlign:
-                                                                      TextAlign
-                                                                          .center,
-                                                                  style:
-                                                                      TextStyle(
-                                                                    color: const Color(
-                                                                        0xFFF59E0B),
-                                                                    fontSize:
-                                                                        15,
-                                                                    fontFamily:
-                                                                        'Syne',
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w700,
-                                                                    height:
-                                                                        1.87,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                        SizedBox(
-                                                          width: 80.28,
-                                                          height: 16,
-                                                          child: Text(
-                                                            'Karaoke Night',
-                                                            textAlign: TextAlign
-                                                                .center,
-                                                            style: TextStyle(
-                                                              color: const Color(
-                                                                  0xFF6B7280),
-                                                              fontSize: 12,
-                                                              fontFamily:
-                                                                  'Syne',
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w400,
-                                                              height: 1.33,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        Positioned(
-                                          left: 1,
-                                          top: 1.50,
-                                          child: Container(
-                                            width: 341,
-                                            height: 42,
-                                            decoration: ShapeDecoration(
-                                              color: const Color(0xFFF59E0B),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.only(
-                                                  topLeft: Radius.circular(20),
-                                                  topRight: Radius.circular(20),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Positioned(
-                                          left: 108,
-                                          top: 7.50,
-                                          child: SizedBox(
-                                            width: 69,
-                                            height: 28,
-                                            child: Text(
-                                              'Aperto',
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                color: const Color(0xFF090B0A),
-                                                fontSize: 15,
-                                                fontFamily: 'Syne',
-                                                fontWeight: FontWeight.w700,
-                                                height: 1.87,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Positioned(
-                                          left: 189,
-                                          top: 13.50,
-                                          child: SizedBox(
-                                            width: 99,
-                                            height: 16,
-                                            child: Text(
-                                              'Fino alle 02:00',
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                color: const Color(0xFF6B7280),
-                                                fontSize: 15,
-                                                fontFamily: 'Syne',
-                                                fontWeight: FontWeight.w400,
-                                                height: 1.07,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Positioned(
-                                          left: 67,
-                                          top: 7.50,
-                                          child: Container(
-                                            width: 29,
-                                            height: 29,
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[300],
-                                              borderRadius:
-                                                  BorderRadius.circular(32),
-                                              /* image: DecorationImage(
-                                                image: NetworkImage(
-                                                    "https://placehold.co/29x29"),
-                                                fit: BoxFit.cover,
-                                              ),*/
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                  const Text(
+                    'Quick Action',
+                    style: TextStyle(
+                      fontFamily: 'Open Sauce',
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1F2937),
                     ),
                   ),
-                  Positioned(
-                    left: 0,
-                    top: 437,
-                    child: Container(
-                      width: 390,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: 32,
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            height: 151.34,
-                            child: Stack(
-                              children: [
-                                Positioned(
-                                  left: 8,
-                                  top: 0,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      SizedBox(
-                                        width: 196,
-                                        height: 32,
-                                        child: Text(
-                                          'Quick Action',
-                                          style: TextStyle(
-                                            color: const Color(0xFF1F2937),
-                                            fontSize: 27,
-                                            fontFamily: 'Syne',
-                                            fontWeight: FontWeight.w500,
-                                            height: 1.19,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Positioned(
-                                  left: 0,
-                                  top: 48,
-                                  child: Container(
-                                    width: 342,
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      spacing: 9,
-                                      children: [
-                                        Container(
-                                          width: 107,
-                                          height: 97,
-                                          decoration: ShapeDecoration(
-                                            color: Colors.white,
-                                            shape: RoundedRectangleBorder(
-                                              side: BorderSide(
-                                                width: 2.50,
-                                                color: const Color(0x4C10B981),
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                            ),
-                                            shadows: [
-                                              BoxShadow(
-                                                color: Color(0x0C000000),
-                                                blurRadius: 2,
-                                                offset: Offset(0, 1),
-                                                spreadRadius: 0,
-                                              )
-                                            ],
-                                          ),
-                                          child: Stack(
-                                            children: [
-                                              Positioned(
-                                                left: 40.36,
-                                                top: 18.74,
-                                                child: Container(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          bottom: 4),
-                                                  child: Column(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment.start,
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Column(
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .start,
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .center,
-                                                        children: [],
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                              Positioned(
-                                                left: 28.11,
-                                                top: 48.24,
-                                                child: Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.center,
-                                                  children: [
-                                                    SizedBox(
-                                                      width: 51,
-                                                      height: 28,
-                                                      child: Text(
-                                                        'Menu',
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style: TextStyle(
-                                                          color: const Color(
-                                                              0xFF1F2937),
-                                                          fontSize: 18,
-                                                          fontFamily: 'Syne',
-                                                          fontWeight:
-                                                              FontWeight.w400,
-                                                          height: 1.56,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Container(
-                                          width: 107,
-                                          height: 97,
-                                          decoration: ShapeDecoration(
-                                            color: Colors.white,
-                                            shape: RoundedRectangleBorder(
-                                              side: BorderSide(
-                                                width: 2.50,
-                                                color: const Color(0x4CF59E0B),
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                            ),
-                                            shadows: [
-                                              BoxShadow(
-                                                color: Color(0x0C000000),
-                                                blurRadius: 2,
-                                                offset: Offset(0, 1),
-                                                spreadRadius: 0,
-                                              )
-                                            ],
-                                          ),
-                                          child: Stack(
-                                            children: [
-                                              Positioned(
-                                                left: 38.98,
-                                                top: 17.66,
-                                                child: Container(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          bottom: 4),
-                                                  child: Column(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment.start,
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Column(
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .start,
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .center,
-                                                        children: [],
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                              Positioned(
-                                                left: 23.72,
-                                                top: 47,
-                                                child: Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.center,
-                                                  children: [
-                                                    SizedBox(
-                                                      width: 57,
-                                                      height: 28,
-                                                      child: Text(
-                                                        'Offerte',
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style: TextStyle(
-                                                          color: const Color(
-                                                              0xFF1F2937),
-                                                          fontSize: 18,
-                                                          fontFamily: 'Syne',
-                                                          fontWeight:
-                                                              FontWeight.w400,
-                                                          height: 1.56,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Container(
-                                          width: 107,
-                                          height: 97,
-                                          decoration: ShapeDecoration(
-                                            color: Colors.white,
-                                            shape: RoundedRectangleBorder(
-                                              side: BorderSide(
-                                                width: 2.50,
-                                                color: const Color(0x4CC084FC),
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                            ),
-                                            shadows: [
-                                              BoxShadow(
-                                                color: Color(0x0C000000),
-                                                blurRadius: 2,
-                                                offset: Offset(0, 1),
-                                                spreadRadius: 0,
-                                              )
-                                            ],
-                                          ),
-                                          child: Stack(
-                                            children: [
-                                              Positioned(
-                                                left: 40.10,
-                                                top: 17.67,
-                                                child: Container(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          bottom: 4),
-                                                  child: Column(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment.start,
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Column(
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .start,
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .center,
-                                                        children: [],
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                              Positioned(
-                                                left: 21.59,
-                                                top: 47,
-                                                child: Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.center,
-                                                  children: [
-                                                    SizedBox(
-                                                      width: 60,
-                                                      height: 28,
-                                                      child: Text(
-                                                        'Eventi',
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style: TextStyle(
-                                                          color: const Color(
-                                                              0xFF1F2937),
-                                                          fontSize: 18,
-                                                          fontFamily: 'Syne',
-                                                          fontWeight:
-                                                              FontWeight.w400,
-                                                          height: 1.56,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            width: double.infinity,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              spacing: 16,
-                              children: [
-                                Container(
-                                  width: double.infinity,
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 4),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          SizedBox(
-                                            width: 114,
-                                            height: 36,
-                                            child: Text(
-                                              'Eventi',
-                                              style: TextStyle(
-                                                color: const Color(0xFF1F2937),
-                                                fontSize: 27,
-                                                fontFamily: 'Syne',
-                                                fontWeight: FontWeight.w500,
-                                                height: 1.33,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Column(
-                                        mainAxisSize: MainAxisSize.max,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          SizedBox(
-                                            width: 76,
-                                            height: 20,
-                                            child: Text(
-                                              'Vedi tutto',
-                                              style: TextStyle(
-                                                color: const Color(0xFF10B981),
-                                                fontSize: 14,
-                                                fontFamily: 'Syne',
-                                                fontWeight: FontWeight.w700,
-                                                height: 1.43,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  width: 390,
-                                  height: 336,
-                                  clipBehavior: Clip.antiAlias,
-                                  decoration: BoxDecoration(),
-                                  child: Stack(
-                                    children: [
-                                      Positioned(
-                                        left: 24,
-                                        top: -0.34,
-                                        child: Container(
-                                          width:
-                                              MediaQuery.of(context).size.width,
-                                          clipBehavior: Clip.antiAlias,
-                                          decoration: BoxDecoration(),
-                                          child: SingleChildScrollView(
-                                            scrollDirection: Axis.horizontal,
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.start,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.center,
-                                              spacing: 17,
-                                              children: [
-                                                Container(
-                                                  width: 236,
-                                                  height: 320,
-                                                  /*decoration: ShapeDecoration(
-                                                    image: DecorationImage(
-                                                      image: NetworkImage(
-                                                          "https://placehold.co/236x320"),
-                                                      fit: BoxFit.cover,
-                                                    ),
-                                                    shape:
-                                                        RoundedRectangleBorder(
-                                                      side: BorderSide(
-                                                        width: 2,
-                                                        color: const Color(
-                                                            0xFF10B981) /* Green */,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              32),
-                                                    ),
-                                                  ),
-                                                */
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.grey[300],
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            32),
-                                                  ),
-                                                ),
-                                                Container(
-                                                  width: 236,
-                                                  height: 320,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.grey[
-                                                        300], // <-- Usa un grigio al posto dell'immagine per ora
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            32),
-                                                    // ... resto del codice
-                                                  ),
-                                                  /*
-                                                  decoration: ShapeDecoration(
-                                                    image: DecorationImage(
-                                                      image: NetworkImage(
-                                                          "https://placehold.co/236x320"),
-                                                      fit: BoxFit.cover,
-                                                    ),
-                                                    shape:
-                                                        RoundedRectangleBorder(
-                                                      side: BorderSide(
-                                                        width: 2,
-                                                        color: const Color(
-                                                            0xFF10B981) /* Green */,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              32),
-                                                    ),
-                                                  ),*/
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            width: double.infinity,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              spacing: 16,
-                              children: [
-                                Container(
-                                  width: double.infinity,
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 4),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          SizedBox(
-                                            width: 114,
-                                            height: 36,
-                                            child: Text(
-                                              'Offerte ',
-                                              style: TextStyle(
-                                                color: const Color(0xFF1F2937),
-                                                fontSize: 27,
-                                                fontFamily: 'Syne',
-                                                fontWeight: FontWeight.w500,
-                                                height: 1.33,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Column(
-                                        mainAxisSize: MainAxisSize.max,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          SizedBox(
-                                            width: 76,
-                                            height: 20,
-                                            child: Text(
-                                              'Vedi tutto',
-                                              style: TextStyle(
-                                                color: const Color(0xFFF59E0B),
-                                                fontSize: 14,
-                                                fontFamily: 'Syne',
-                                                fontWeight: FontWeight.w700,
-                                                height: 1.43,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  width: 390,
-                                  height: 336,
-                                  clipBehavior: Clip.antiAlias,
-                                  decoration: BoxDecoration(),
-                                  child: Stack(
-                                    children: [
-                                      Positioned(
-                                        left: 24,
-                                        top: -0.34,
-                                        child: Container(
-                                          width:
-                                              MediaQuery.of(context).size.width,
-                                          clipBehavior: Clip.antiAlias,
-                                          decoration: BoxDecoration(),
-                                          child: SingleChildScrollView(
-                                            scrollDirection: Axis.horizontal,
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.start,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.center,
-                                              spacing: 17,
-                                              children: [
-                                                Container(
-                                                  width: 236,
-                                                  height: 320,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.grey[
-                                                        300], // <-- Usa un grigio al posto dell'immagine per ora
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            32),
-                                                    // ... resto del codice
-                                                  ),
-                                                  /*decoration: ShapeDecoration(
-                                                    image: DecorationImage(
-                                                      image: NetworkImage(
-                                                          "https://placehold.co/236x320"),
-                                                      fit: BoxFit.cover,
-                                                    ),
-                                                    shape:
-                                                        RoundedRectangleBorder(
-                                                      side: BorderSide(
-                                                        width: 2,
-                                                        color: const Color(
-                                                            0xFFF59E0B) /* Orange */,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              32),
-                                                    ),
-                                                  ),*/
-                                                ),
-                                                Container(
-                                                  width: 236,
-                                                  height: 320,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.grey[
-                                                        300], // <-- Usa un grigio al posto dell'immagine per ora
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            32),
-                                                    // ... resto del codice
-                                                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildQuickActionButton('Menu', Icons.restaurant_menu_rounded, greenColor),
+                      const SizedBox(width: 12),
+                      _buildQuickActionButton('Offerte', Icons.local_offer_outlined, yellowColor),
+                      const SizedBox(width: 12),
+                      _buildQuickActionButton('Eventi', Icons.calendar_month_outlined, purpleColor),
+                    ],
+                  ),
+                ],
+              ),
+            ),
 
-                                                  /*decoration: ShapeDecoration(
-                                                    image: DecorationImage(
-                                                      image: NetworkImage(
-                                                          "https://placehold.co/236x320"),
-                                                      fit: BoxFit.cover,
-                                                    ),
-                                                    shape:
-                                                        RoundedRectangleBorder(
-                                                      side: BorderSide(
-                                                        width: 2,
-                                                        color: const Color(
-                                                            0xFFF59E0B) /* Orange */,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              32),
-                                                    ),
-                                                  ),*/
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+            const SizedBox(height: 36),
+
+            // EVENTI COLLEGATI AL BACKEND
+            FutureBuilder<List<Event>>(
+              future: _eventsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Text('Impossibile caricare gli eventi: ${snapshot.error}', style: const TextStyle(color: Colors.red)),
+                    ),
+                  );
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Text('Nessun evento in programma', style: TextStyle(color: Colors.grey)),
+                    ),
+                  );
+                }
+
+                // Dati ricevuti con successo!
+                final events = snapshot.data!;
+
+                return _buildHorizontalSection(
+                  title: 'Eventi',
+                  actionText: 'Vedi tutto',
+                  actionColor: greenColor,
+                  itemsCount: events.length,
+                  itemBuilder: (context, index) {
+                    final event = events[index];
+                    return CustomCardWidget(
+                      // CustomCardWidget probabilmente andrà adattato per ricevere anche il titolo ecc.
+                      // Per ora passiamo l'immagine se esiste o null. Se il backend invia un URL relativo aggiungiamo la base
+                      borderColor: greenColor,
+                      imageUrl: (event.immagineUrl != null && event.immagineUrl!.isNotEmpty) 
+                                ? "${ApiService.serverUrl}${event.immagineUrl!.startsWith('/') ? '' : '/'}${event.immagineUrl!.replaceAll('\\', '/')}" 
+                                : null,
+                    );
+                  },
+                );
+              },
+            ),
+
+            const SizedBox(height: 36),
+
+            // OFFERTE
+            _buildHorizontalSection(
+              title: 'Offerte',
+              actionText: 'Vedi tutto',
+              actionColor: yellowColor,
+              itemsCount: offers.length,
+              itemBuilder: (context, index) {
+                return CustomCardWidget(
+                  borderColor: yellowColor,
+                  imageUrl: offers[index].imageUrl,
+                );
+              },
+            ),
+
+            const SizedBox(height: 36),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopHeader(BuildContext context) {
+    // Altezza aggiornata in modo che la card sia tutta dentro l'immagine
+    return SizedBox(
+      height: 380,
+      child: Stack(
+        children: [
+          // Sfondo con immagine burger
+          Container(
+            height: 380,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/DeliciousBurger.png'),
+                fit: BoxFit.cover,
+              ),
+              
+            ),
+          ),
+          
+          // Sfumatura nera in testa per dare visibilità al Logo
+          Container(
+            height: 120,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.black.withOpacity(0.6), Colors.transparent],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+
+          // Header testuale / Logo in alto a sinistra
+          Positioned(
+            top: 56,
+            left: 24,
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: SvgPicture.asset(
+                      'assets/icons/Logo.svg', // Se è un SVG vero
+                      width: 24,
+                      height: 24,
+                      fit: BoxFit.contain,
+                      // Fallback in caso SVG dia errore
+                      placeholderBuilder: (context) => const Text('Q', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Open Sauce', fontSize: 18)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                const Text(
+                  'Qi - food & focus',
+                  style: TextStyle(
+                    fontFamily: 'Open Sauce',
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ont ("Aperto" / "Dove Siamo" / "Prossimo Evento")
+          Positioned(
+            bottom: 24, // Sola alzata rispetto a bottom: 0 per rimanere interamente dentro l'immagine
+            left: 24,
+            right: 24,
+            child: Container(
+              height: 110,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    spreadRadius: 0,
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                  // Bordo come nell'immagine, o solo ombra. Dall'immagine sembra avere un sottile giallo intorno.
+                  BoxShadow(
+                    color: yellowColor.withOpacity(0.5),
+                    spreadRadius: 1,
+                  )
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Prima metà superiore gialla (Header Card)
+                  Container(
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: yellowColor,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(24),
+                        topRight: Radius.circular(24),
                       ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 22,
+                          height: 22,
+                          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                          child: const Center(child: Text('Q', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'Open Sauce'))),
+                        ),
+                        const SizedBox(width: 8),
+                        // Pallino verde
+                        Container(width: 8, height: 8, decoration: BoxDecoration(color: greenColor, shape: BoxShape.circle)),
+                        const SizedBox(width: 6),
+                        const Text(
+                          'Aperto',
+                          style: TextStyle(
+                            fontFamily: 'Open Sauce',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Pallino grigio
+                        Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.grey, shape: BoxShape.circle)),
+                        const SizedBox(width: 6),
+                        const Text(
+                          'Fino alle 02:00',
+                          style: TextStyle(
+                            fontFamily: 'Open Sauce',
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Seconda metà per (Dove Siamo / Evento)
+                  Expanded(
+                    child: Row(
+                      children: [
+                        // Left 
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Dove Siamo',
+                                style: TextStyle(fontFamily: 'Open Sauce', color: greenColor, fontWeight: FontWeight.w700, fontSize: 13),
+                              ),
+                              const SizedBox(height: 2),
+                              const Text(
+                                'Via Luigi Enaudi',
+                                style: TextStyle(fontFamily: 'Open Sauce', color: Colors.black54, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                        
+                        // Linea Divisoria 
+                        Container(
+                          width: 1,
+                          height: 36,
+                          color: Colors.grey[200],
+                        ),
+                        
+                        // Right
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Prossimo evento',
+                                style: TextStyle(fontFamily: 'Open Sauce', color: yellowColor, fontWeight: FontWeight.w700, fontSize: 13),
+                              ),
+                              const SizedBox(height: 2),
+                              const Text(
+                                'Karaoke Night',
+                                style: TextStyle(fontFamily: 'Open Sauce', color: Colors.black54, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButton(String title, IconData icon, Color color) {
+    return Expanded(
+      child: Container(
+        height: 100,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: color.withOpacity(0.5), // Bordo semi trasparente colorato
+            width: 1.5,
+          ),
+          boxShadow: [
+             BoxShadow(color: Colors.grey.withOpacity(0.05), spreadRadius: 0, blurRadius: 10, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 30),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: const TextStyle(
+                fontFamily: 'Open Sauce',
+                color: Color(0xFF1F2937),
+                fontWeight: FontWeight.w500,
+                fontSize: 15,
               ),
             ),
           ],
@@ -1077,4 +391,57 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildHorizontalSection({
+    required String title,
+    required String actionText,
+    required Color actionColor,
+    required int itemsCount,
+    required IndexedWidgetBuilder itemBuilder,
+  }) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontFamily: 'Open Sauce',
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+              Text(
+                actionText,
+                style: TextStyle(
+                  fontFamily: 'Open Sauce',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: actionColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 320, // Altezza listview proporzionale alle card più grandi
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            scrollDirection: Axis.horizontal,
+            itemCount: itemsCount,
+            separatorBuilder: (context, index) => const SizedBox(width: 12),
+            itemBuilder: itemBuilder,
+          ),
+        ),
+      ],
+    );
+  }
 }
+

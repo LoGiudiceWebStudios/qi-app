@@ -1,0 +1,107 @@
+{{ template "layout_top" . }}
+
+<h1 class="text-3xl font-bold mb-6">Elenco Eventi</h1>
+
+<div class="bg-white rounded shadow-md overflow-x-auto p-4 mb-8">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-700">Tutti gli eventi</h2>
+        <button onclick="toggleModal('modal-event')" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+            Crea Nuovo
+        </button>
+    </div>
+
+    <table class="w-full text-left table-auto border-collapse">
+        <thead>
+            <tr class="bg-gray-100 text-gray-600 uppercase text-xs">
+                <th class="py-3 px-6 border-b">Logo</th>
+                <th class="py-3 px-6 border-b">ID</th>
+                <th class="py-3 px-6 border-b">Titolo</th>
+                <th class="py-3 px-6 border-b">Data e Ora</th>
+                <th class="py-3 px-6 border-b">Luogo</th>
+            </tr>
+        </thead>
+        <tbody class="text-sm">
+            {{ range .Events }}
+            <tr class="border-b transition duration-200 hover:bg-gray-50">
+                <td class="py-3 px-6">
+                    {{ if .ImmagineURL }}
+                    <img src="/{{ .ImmagineURL }}" class="w-12 h-12 object-cover rounded shadow" alt="cover">
+                    {{ else }}
+                    <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-500 shadow">?</div>
+                    {{ end }}
+                </td>
+                <td class="py-3 px-6">{{ .ID }}</td>
+                <td class="py-3 px-6 font-semibold">{{ .Titolo }}</td>
+                <td class="py-3 px-6">{{ .DataEvento.Format "02/01/2006" }} {{ .Ora }}</td>
+                <td class="py-3 px-6">{{ .Luogo }}</td>
+            </tr>
+            {{ else }}
+            <tr>
+                <td colspan="5" class="py-4 text-center text-gray-500">Nessun evento disponibile</td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal -->
+<div id="modal-event" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 relative h-4/5 overflow-y-auto">
+        <!-- Close button -->
+        <button onclick="toggleModal('modal-event')" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+
+        <h2 class="text-2xl font-bold mb-6">Nuovo Evento</h2>
+
+        <form action="/admin/events" method="POST" enctype="multipart/form-data" class="space-y-4">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Titolo</label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="titolo" type="text" placeholder="Nome evento" required>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Immagine Copertina</label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="immagine" type="file" accept="image/*">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">Descrizione</label>
+                <textarea class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="descrizione" rows="4" required></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Data Evento</label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="data_evento" type="date" required>
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Ora Evento</label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="ora_evento" type="time" required>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">Luogo</label>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="luogo" type="text" placeholder="Es: Piazza Roma, Roma">
+            </div>
+
+            <div class="flex items-center justify-end mt-6 border-t pt-4">
+                <button type="button" onclick="toggleModal('modal-event')" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded mr-2">Annulla</button>
+                <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Salva Evento</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleModal(modalID) {
+    document.getElementById(modalID).classList.toggle("hidden");
+}
+</script>
+
+{{ template "layout_bottom" . }}

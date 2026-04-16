@@ -2,54 +2,65 @@ package main
 
 import (
 	"log"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
 
 	"qi-backend/internal/database"
-
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"qi-backend/internal/handlers"
+	"qi-backend/internal/handlers/admin"
+	"qi-backend/internal/services"
 )
 
 func main() {
-	// 1. Inizializza la connessione e le migrazioni del DB
+	// Connessione al DB Postgres 'qi_db'
 	log.Println("Inizializzazione del database...")
 	database.Connect()
 
-	// 2. Configura il Router
-	r := gin.Default()
+	// 1. Inizializzo service e handlers (Dependency Injection)
+	homeService := services.NewHomeService()
+	homeHandler := handlers.NewHomeHandler(homeService)
+	adminDashboardHandler := admin.NewDashboardHandler()
+	adminEventsHandler := admin.NewEventsHandler()
 
-	// 3. Configura il CORS (Fondamentale se il frontend è Web, ma utile anche per il mobile in debug)
-	r.Use(cors.Default())
+	// 2. Inizializzazione Router Gin
+	router := gin.Default()
 
-	// 4. Architettura delle Rotte (Versione API v1)
-	api := r.Group("/api/v1")
+	// Servire la cartella di upload pubblicamente
+	router.Static("/uploads", "./uploads")
+
+	// Redirect root to admin dashboard
+	router.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/admin")
+	})
+
+	// (Aggiungi middleware qui se necessario come ad esempio CORS middlewares)
+
+	// 3. Caricamento dei Template HTML (Glob per caricare sia base che viste specifiche)
+	router.LoadHTMLGlob("internal/templates/admin/*.html")
+
+	// 4. Configurazione Gruppi di Rotte REST API (JSON)
+	api := router.Group("/api/v1")
 	{
-		// 🟢 Rotte Pubbliche
-		public := api.Group("/")
-		{
-			public.GET("/ping", func(c *gin.Context) {
-				c.JSON(200, gin.H{
-					"status":  "ok",
-					"message": "Il Backend di QI App è operativo!",
-				})
-			})
-			// Esempio futuro: public.POST("/login", authHandler.Login)
-		}
-
-		// 🔴 Rotte Private (Qui in futuro aggiungeremo un Middleware per verificare il Token)
-		private := api.Group("/secure")
-		// private.Use(middleware.RequireAuth) // <-- Da implementare in futuro
-		{
-			private.GET("/profile", func(c *gin.Context) {
-				c.JSON(200, gin.H{
-					"message": "Benvenuto nell'area protetta",
-				})
-			})
-		}
+		// Rotte pubbliche per Flutter
+		api.GET("/home", homeHandler.GetHomeData)
+		api.GET("/events", handlers.GetEvents)
+		api.POST("/events", handlers.CreateEvent) // per admin se si usa un'API dal client
 	}
 
-	// 5. Avvia il server
-	log.Println("🚀 Server in ascolto sulla porta 8080...")
-	if err := r.Run(":8080"); err != nil {
-		log.Fatal("❌ Errore critico all'avvio del server: ", err)
+	// 5. Gruppo rotte della Dashboard Web Admin (HTML HTMX)
+	backoffice := router.Group("/admin")
+	{
+		// Dashboard principale
+		backoffice.GET("", adminDashboardHandler.RenderDashboard)
+		backoffice.GET("/events", adminEventsHandler.RenderEvents)
+		backoffice.GET("/events/new", adminEventsHandler.RenderNewEvent)
+		backoffice.POST("/events", adminEventsHandler.CreateEvent)
+	}
+
+	// Avvia il server (di default porta 8080)
+	log.Println("Avvio server backend per Qi in corso sulla porta :9090...")
+	if err := router.Run(":9090"); err != nil {
+		log.Fatalf("Errore critico in avvio server HTTP: %v", err)
 	}
 }
