@@ -8,7 +8,7 @@ class ApiService {
   static String get serverUrl {
     // Prova a usare 10.0.2.2 per l'emulatore Android, altrimenti localhost
     if (kIsWeb) return 'http://localhost:9090';
-    if (Platform.isAndroid) return 'http://192.168.1.110:9090';
+    if (Platform.isAndroid) return 'http://10.0.2.2:9090';
     // Se stai usando un dispositivo fisico, potresti dover usare il tuo indirizzo IP locale, ad es: 'http://192.168.1.X:9090'
     return 'http://localhost:9090'; // iOS e altri
   }

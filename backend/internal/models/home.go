@@ -15,6 +15,16 @@ type HomeOffer struct {
 	ImageUrl string `json:"imageUrl"`
 }
 
+type OfferAPI struct {
+	ID          string  `json:"id"`
+	ImageURL    string  `json:"imageUrl"`
+	Title       string  `json:"title"`
+	Description string  `json:"description"`
+	TermsText   *string `json:"termsText,omitempty"`
+	ActionText  string  `json:"actionText"`
+	Code        string  `json:"code"`
+}
+
 type HomeData struct {
 	IsOpen       bool        `json:"isOpen"`
 	ClosingTime  string      `json:"closingTime"`

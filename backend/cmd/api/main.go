@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -30,6 +31,8 @@ func main() {
 		database.DB.Create(&testUser)
 		log.Println("Utente fittizio creato: test@qiapp.com / password123")
 	}
+
+	seedOffers()
 
 	// 1. Inizializzo service e handlers (Dependency Injection)
 	homeService := services.NewHomeService()
@@ -64,6 +67,7 @@ func main() {
 
 		// Rotte pubbliche per Flutter
 		api.GET("/home", homeHandler.GetHomeData)
+		api.GET("/offers", handlers.GetOffers)
 		api.GET("/events", handlers.GetEvents)
 		api.POST("/events", handlers.CreateEvent) // per admin se si usa un'API dal client
 	}
@@ -83,4 +87,53 @@ func main() {
 	if err := router.Run(":9090"); err != nil {
 		log.Fatalf("Errore critico in avvio server HTTP: %v", err)
 	}
+}
+
+// OFFERTE DI ESEMPIO PER TEST (da rimuovere in produzione, o sostituire con un seed più robusto) --- IGNORE ---
+func seedOffers() {
+	var count int64
+	if err := database.DB.Model(&models.Offer{}).Count(&count).Error; err != nil {
+		log.Printf("Impossibile contare le offerte per il seed: %v", err)
+		return
+	}
+
+	if count > 0 {
+		log.Printf("Seed offerte saltato: tabella gia popolata (%d record)", count)
+		return
+	}
+
+	now := time.Now()
+	offers := []models.Offer{
+		{
+			Titolo:       "Get Flat 25 off",
+			Descrizione:  "Save 25 on all transactions above 250.",
+			ImmagineURL:  "https://picsum.photos/seed/qi-offer-1/1200/700",
+			ValidaDal:    now.AddDate(0, 0, -7),
+			ValidaFino:   now.AddDate(0, 0, 30),
+			CodiceSconto: "QI25OFF",
+		},
+		{
+			Titolo:       "Burger Combo Special",
+			Descrizione:  "Combo burger e drink con sconto dedicato.",
+			ImmagineURL:  "https://picsum.photos/seed/qi-offer-2/1200/700",
+			ValidaDal:    now.AddDate(0, 0, -3),
+			ValidaFino:   now.AddDate(0, 1, 0),
+			CodiceSconto: "QI-COMBO-10",
+		},
+		{
+			Titolo:       "Student Night",
+			Descrizione:  "Promo studenti valida dal lunedi al giovedi.",
+			ImmagineURL:  "https://picsum.photos/seed/qi-offer-3/1200/700",
+			ValidaDal:    now.AddDate(0, 0, -1),
+			ValidaFino:   now.AddDate(0, 0, 20),
+			CodiceSconto: "QI-STUDENT",
+		},
+	}
+
+	if err := database.DB.Create(&offers).Error; err != nil {
+		log.Printf("Errore durante il seed delle offerte: %v", err)
+		return
+	}
+
+	log.Printf("Seed completato: create %d offerte di esempio", len(offers))
 }

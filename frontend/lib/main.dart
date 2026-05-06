@@ -6,11 +6,7 @@ import 'presentation/pages/splash_screen.dart';
 import 'presentation/pages/login_screen.dart';
 
 void main() {
-  runApp(
-    const ProviderScope(
-      child: QiApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: QiApp()));
 }
 
 class QiApp extends StatelessWidget {
@@ -26,7 +22,9 @@ class QiApp extends StatelessWidget {
       routes: {
         '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
-        '/home': (context) => const HomePage(), // Andrà sostituito da Nav Screen in futuro
+        '/home':
+            (context) =>
+                const HomePage(), // HomePage include ora la shell con floating navbar
       },
     );
   }

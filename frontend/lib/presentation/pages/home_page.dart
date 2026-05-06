@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/custom_card_widget.dart';
 import '../../data/api/event_api.dart';
 import '../../data/models/event_model.dart';
+import '../widgets/floating_nav_bar.dart';
+import '../manager/nav_provider.dart';
+import 'events_page.dart';
+import 'offer_page.dart';
+import 'scan_page.dart';
+import 'menu_page.dart';
+import 'profile_page.dart';
 
 import '../../data/services/api_service.dart';
 
@@ -15,19 +23,21 @@ class OfferModel {
   OfferModel({required this.id, required this.title, this.imageUrl});
 }
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends ConsumerState<HomePage> {
   // Colori come richiesto
   final Color greenColor = const Color(0xFF008F30);
   final Color yellowColor = const Color(0xFFE9B416);
-  final Color purpleColor = const Color(0xFFc084fc); // Preso dal mockup originale
-  
+  final Color purpleColor = const Color(
+    0xFFc084fc,
+  ); // Preso dal mockup originale
+
   // Future per caricare gli eventi dal Backend
   late Future<List<Event>> _eventsFuture;
 
@@ -44,113 +54,161 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedIndex = ref.watch(bottomNavIndexProvider);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFBFA), // Sfondo chiaro
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // TOP SECTION: Header con Immagine e Card Fluttuante
-            _buildTopHeader(context),
-            
-            const SizedBox(height: 32),
-
-            // QUICK ACTION
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Quick Action',
-                    style: TextStyle(
-                      fontFamily: 'Open Sauce',
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1F2937),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildQuickActionButton('Menu', Icons.restaurant_menu_rounded, greenColor),
-                      const SizedBox(width: 12),
-                      _buildQuickActionButton('Offerte', Icons.local_offer_outlined, yellowColor),
-                      const SizedBox(width: 12),
-                      _buildQuickActionButton('Eventi', Icons.calendar_month_outlined, purpleColor),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 36),
-
-            // EVENTI COLLEGATI AL BACKEND
-            FutureBuilder<List<Event>>(
-              future: _eventsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: Text('Impossibile caricare gli eventi: ${snapshot.error}', style: const TextStyle(color: Colors.red)),
-                    ),
-                  );
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 24.0),
-                      child: Text('Nessun evento in programma', style: TextStyle(color: Colors.grey)),
-                    ),
-                  );
-                }
-
-                // Dati ricevuti con successo!
-                final events = snapshot.data!;
-
-                return _buildHorizontalSection(
-                  title: 'Eventi',
-                  actionText: 'Vedi tutto',
-                  actionColor: greenColor,
-                  itemsCount: events.length,
-                  itemBuilder: (context, index) {
-                    final event = events[index];
-                    return CustomCardWidget(
-                      // CustomCardWidget probabilmente andrà adattato per ricevere anche il titolo ecc.
-                      // Per ora passiamo l'immagine se esiste o null. Se il backend invia un URL relativo aggiungiamo la base
-                      borderColor: greenColor,
-                      imageUrl: (event.immagineUrl != null && event.immagineUrl!.isNotEmpty) 
-                                ? "${ApiService.serverUrl}${event.immagineUrl!.startsWith('/') ? '' : '/'}${event.immagineUrl!.replaceAll('\\', '/')}" 
-                                : null,
-                    );
-                  },
-                );
-              },
-            ),
-
-            const SizedBox(height: 36),
-
-            // OFFERTE
-            _buildHorizontalSection(
-              title: 'Offerte',
-              actionText: 'Vedi tutto',
-              actionColor: yellowColor,
-              itemsCount: offers.length,
-              itemBuilder: (context, index) {
-                return CustomCardWidget(
-                  borderColor: yellowColor,
-                  imageUrl: offers[index].imageUrl,
-                );
-              },
-            ),
-
-            const SizedBox(height: 36),
-          ],
+      backgroundColor: const Color(0xFFFAFBFA),
+      extendBody: true,
+      body: IndexedStack(
+        index: selectedIndex,
+        children: [
+          _buildHomeTab(context),
+          const OfferPage(),
+          const ScanPage(),
+          const MenuPage(),
+          const ProfilePage(),
+        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: FloatingNavBar(
+          currentIndex: selectedIndex,
+          onTap: (index) {
+            ref.read(bottomNavIndexProvider.notifier).setIndex(index);
+          },
         ),
+      ),
+    );
+  }
+
+  Widget _buildHomeTab(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // TOP SECTION: Header con Immagine e Card Fluttuante
+          _buildTopHeader(context),
+
+          const SizedBox(height: 32),
+
+          // QUICK ACTION
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Quick Action',
+                  style: TextStyle(
+                    fontFamily: 'Open Sauce',
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildQuickActionButton(
+                      'Menu',
+                      Icons.restaurant_menu_rounded,
+                      greenColor,
+                    ),
+                    const SizedBox(width: 12),
+                    _buildQuickActionButton(
+                      'Offerte',
+                      Icons.local_offer_outlined,
+                      yellowColor,
+                    ),
+                    const SizedBox(width: 12),
+                    _buildQuickActionButton(
+                      'Eventi',
+                      Icons.calendar_month_outlined,
+                      purpleColor,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const EventsPage()),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 36),
+
+          // EVENTI COLLEGATI AL BACKEND
+          FutureBuilder<List<Event>>(
+            future: _eventsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Text(
+                      'Impossibile caricare gli eventi: ${snapshot.error}',
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+                );
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Text(
+                      'Nessun evento in programma',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                );
+              }
+
+              // Dati ricevuti con successo!
+              final events = snapshot.data!;
+
+              return _buildHorizontalSection(
+                title: 'Eventi',
+                actionText: 'Vedi tutto',
+                actionColor: greenColor,
+                itemsCount: events.length,
+                itemBuilder: (context, index) {
+                  final event = events[index];
+                  return CustomCardWidget(
+                    borderColor: greenColor,
+                    imageUrl:
+                        (event.immagineUrl != null &&
+                                event.immagineUrl!.isNotEmpty)
+                            ? "${ApiService.serverUrl}${event.immagineUrl!.startsWith('/') ? '' : '/'}${event.immagineUrl!.replaceAll('\\', '/')}"
+                            : null,
+                  );
+                },
+              );
+            },
+          ),
+
+          const SizedBox(height: 36),
+
+          // OFFERTE
+          _buildHorizontalSection(
+            title: 'Offerte',
+            actionText: 'Vedi tutto',
+            actionColor: yellowColor,
+            itemsCount: offers.length,
+            itemBuilder: (context, index) {
+              return CustomCardWidget(
+                borderColor: yellowColor,
+                imageUrl: offers[index].imageUrl,
+              );
+            },
+          ),
+
+          const SizedBox(height: 120),
+        ],
       ),
     );
   }
@@ -170,10 +228,9 @@ class _HomePageState extends State<HomePage> {
                 image: AssetImage('assets/images/DeliciousBurger.png'),
                 fit: BoxFit.cover,
               ),
-              
             ),
           ),
-          
+
           // Sfumatura nera in testa per dare visibilità al Logo
           Container(
             height: 120,
@@ -206,7 +263,15 @@ class _HomePageState extends State<HomePage> {
                       height: 24,
                       fit: BoxFit.contain,
                       // Fallback in caso SVG dia errore
-                      placeholderBuilder: (context) => const Text('Q', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Open Sauce', fontSize: 18)),
+                      placeholderBuilder:
+                          (context) => const Text(
+                            'Q',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Open Sauce',
+                              fontSize: 18,
+                            ),
+                          ),
                     ),
                   ),
                 ),
@@ -226,7 +291,8 @@ class _HomePageState extends State<HomePage> {
 
           // ont ("Aperto" / "Dove Siamo" / "Prossimo Evento")
           Positioned(
-            bottom: 24, // Sola alzata rispetto a bottom: 0 per rimanere interamente dentro l'immagine
+            bottom:
+                24, // Sola alzata rispetto a bottom: 0 per rimanere interamente dentro l'immagine
             left: 24,
             right: 24,
             child: Container(
@@ -245,7 +311,7 @@ class _HomePageState extends State<HomePage> {
                   BoxShadow(
                     color: yellowColor.withOpacity(0.5),
                     spreadRadius: 1,
-                  )
+                  ),
                 ],
               ),
               child: Column(
@@ -266,12 +332,31 @@ class _HomePageState extends State<HomePage> {
                         Container(
                           width: 22,
                           height: 22,
-                          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                          child: const Center(child: Text('Q', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'Open Sauce'))),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'Q',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Open Sauce',
+                              ),
+                            ),
+                          ),
                         ),
                         const SizedBox(width: 8),
                         // Pallino verde
-                        Container(width: 8, height: 8, decoration: BoxDecoration(color: greenColor, shape: BoxShape.circle)),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: greenColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                         const SizedBox(width: 6),
                         const Text(
                           'Aperto',
@@ -284,7 +369,14 @@ class _HomePageState extends State<HomePage> {
                         ),
                         const SizedBox(width: 8),
                         // Pallino grigio
-                        Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.grey, shape: BoxShape.circle)),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Colors.grey,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                         const SizedBox(width: 6),
                         const Text(
                           'Fino alle 02:00',
@@ -298,36 +390,45 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                   ),
-                  
+
                   // Seconda metà per (Dove Siamo / Evento)
                   Expanded(
                     child: Row(
                       children: [
-                        // Left 
+                        // Left
                         Expanded(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
                                 'Dove Siamo',
-                                style: TextStyle(fontFamily: 'Open Sauce', color: greenColor, fontWeight: FontWeight.w700, fontSize: 13),
+                                style: TextStyle(
+                                  fontFamily: 'Open Sauce',
+                                  color: greenColor,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
                               ),
                               const SizedBox(height: 2),
                               const Text(
                                 'Via Luigi Enaudi',
-                                style: TextStyle(fontFamily: 'Open Sauce', color: Colors.black54, fontSize: 12),
+                                style: TextStyle(
+                                  fontFamily: 'Open Sauce',
+                                  color: Colors.black54,
+                                  fontSize: 12,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        
-                        // Linea Divisoria 
+
+                        // Linea Divisoria
                         Container(
                           width: 1,
                           height: 36,
                           color: Colors.grey[200],
                         ),
-                        
+
                         // Right
                         Expanded(
                           child: Column(
@@ -335,12 +436,21 @@ class _HomePageState extends State<HomePage> {
                             children: [
                               Text(
                                 'Prossimo evento',
-                                style: TextStyle(fontFamily: 'Open Sauce', color: yellowColor, fontWeight: FontWeight.w700, fontSize: 13),
+                                style: TextStyle(
+                                  fontFamily: 'Open Sauce',
+                                  color: yellowColor,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
                               ),
                               const SizedBox(height: 2),
                               const Text(
                                 'Karaoke Night',
-                                style: TextStyle(fontFamily: 'Open Sauce', color: Colors.black54, fontSize: 12),
+                                style: TextStyle(
+                                  fontFamily: 'Open Sauce',
+                                  color: Colors.black54,
+                                  fontSize: 12,
+                                ),
                               ),
                             ],
                           ),
@@ -357,36 +467,50 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildQuickActionButton(String title, IconData icon, Color color) {
+  Widget _buildQuickActionButton(
+    String title,
+    IconData icon,
+    Color color, {
+    VoidCallback? onTap,
+  }) {
     return Expanded(
-      child: Container(
-        height: 100,
-        decoration: BoxDecoration(
-          color: Colors.white,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: color.withOpacity(0.5), // Bordo semi trasparente colorato
-            width: 1.5,
-          ),
-          boxShadow: [
-             BoxShadow(color: Colors.grey.withOpacity(0.05), spreadRadius: 0, blurRadius: 10, offset: const Offset(0, 4)),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 30),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: const TextStyle(
-                fontFamily: 'Open Sauce',
-                color: Color(0xFF1F2937),
-                fontWeight: FontWeight.w500,
-                fontSize: 15,
-              ),
+          child: Container(
+            height: 100,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: color.withOpacity(0.5), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.05),
+                  spreadRadius: 0,
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: color, size: 30),
+                const SizedBox(height: 8),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontFamily: 'Open Sauce',
+                    color: Color(0xFF1F2937),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 15,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -444,4 +568,3 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-

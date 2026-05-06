@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Costruttore privato per evitare che la classe venga istanziata
@@ -11,10 +12,8 @@ class AppTheme {
       brightness: Brightness.dark,
     ),
     useMaterial3: true,
-    appBarTheme: const AppBarTheme(
-      centerTitle: true,
-      elevation: 0,
-    ),
+    textTheme: GoogleFonts.syneTextTheme(),
+    appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
   );
 
   static final ThemeData lightTheme = ThemeData(
@@ -24,5 +23,6 @@ class AppTheme {
       brightness: Brightness.light,
     ),
     useMaterial3: true,
+    textTheme: GoogleFonts.syneTextTheme(),
   );
 }
