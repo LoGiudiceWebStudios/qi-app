@@ -1,0 +1,13 @@
+﻿package handlers
+
+import (
+        "net/http"
+
+        "qi-backend/internal/database"
+        "qi-backend/internal/models"
+        "qi-backend/internal/services"
+
+        "github.com/gin-gonic/gin"
+)
+
+type AuthHandler struct {

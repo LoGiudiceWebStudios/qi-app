@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "675445824557",
+    "project_id": "qi-app-4edde",
+    "storage_bucket": "qi-app-4edde.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:675445824557:android:ddb2ebdc4ebb81ad916ca4",
+        "android_client_info": {
+          "package_name": "com.qi.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "675445824557-lul25qcfo9quurj00privqnngajft895.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.qi.app",
+            "certificate_hash": "8817fc52c2a46ccedd5724a20ceae33f5670c4ac"
+          }
+        },
+        {
+          "client_id": "675445824557-t3kmlhpl7in36a9i83qbrhromiu976sv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIhOU6EIrX40zlCivbKXxe24y3D8VJEoE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "675445824557-t3kmlhpl7in36a9i83qbrhromiu976sv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

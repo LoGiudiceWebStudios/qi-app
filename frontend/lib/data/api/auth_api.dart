@@ -1,56 +1,56 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+﻿import 'package:dio/dio.dart';
 import '../services/api_service.dart';
+import '../services/secure_storage_service.dart';
 
 class AuthApi {
-  // Metodo per il login
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
-      final response = await http.post(
-        Uri.parse('${ApiService.baseUrl}/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
-      ).timeout(const Duration(seconds: 10));
+      final response = await ApiService.dio.post('/auth/login', data: {
+        'email': email,
+        'password': password,
+      });
 
-      final Map<String, dynamic> data = json.decode(response.body);
-
-      if (response.statusCode == 200 && data['success'] == true) {
-        return data; // Ritorna token ed utente
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final token = response.data['token'];
+        await SecureStorageService.saveToken(token);
+        return response.data;
       } else {
-        throw Exception(data['message'] ?? 'Errore durante il login');
+         throw Exception(response.data['message'] ?? 'Errore durante il login');
       }
-    } catch (e) {
-      throw Exception('Errore di connessione: $e');
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response?.data['message'] ?? 'Errore di autenticazione');
+      }
+      throw Exception('Errore di connessione al server');
     }
   }
 
-  // Metodo per Registrazione
-  Future<Map<String, dynamic>> signUp(
-      String nome, String cognome, String email, String password) async {
+  Future<Map<String, dynamic>> signUp(String nome, String cognome, String telefono, String email, String password) async {
     try {
-      final response = await http.post(
-        Uri.parse('${ApiService.baseUrl}/auth/signup'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'nome': nome,
-          'cognome': cognome,
-          'email': email,
-          'password': password,
-        }),
-      ).timeout(const Duration(seconds: 10));
+      final response = await ApiService.dio.post('/auth/signup', data: {
+        'nome': nome,
+        'cognome': cognome,
+        'telefono': telefono,
+        'email': email,
+        'password': password,
+      });
 
-      final Map<String, dynamic> data = json.decode(response.body);
-
-      if (response.statusCode == 201 && data['success'] == true) {
-        return data;
+      if (response.statusCode == 201 && response.data['success'] == true) {
+         final token = response.data['token'];
+         await SecureStorageService.saveToken(token);
+         return response.data;
       } else {
-        throw Exception(data['message'] ?? 'Errore durante la registrazione');
+        throw Exception(response.data['message'] ?? 'Errore durante la registrazione');
       }
-    } catch (e) {
-      throw Exception('Errore di connessione: $e');
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response?.data['message'] ?? 'Errore durante la registrazione');
+      }
+      throw Exception('Errore di connessione al server');
     }
+  }
+
+  Future<void> logout() async {
+    await SecureStorageService.deleteToken();
   }
 }

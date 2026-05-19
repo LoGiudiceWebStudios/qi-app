@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"path/filepath"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -12,7 +13,7 @@ import (
 
 func GetEvents(c *gin.Context) {
 	var events []models.Event
-	if err := database.DB.Find(&events).Error; err != nil {
+	if err := database.DB.Where("data_evento >= ?", time.Now().Add(-12*time.Hour)).Order("data_evento asc").Find(&events).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Errore nel recupero degli eventi"})
 		return
 	}

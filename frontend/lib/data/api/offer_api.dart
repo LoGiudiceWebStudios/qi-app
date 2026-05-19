@@ -34,4 +34,19 @@ class OfferApi {
       throw Exception('Errore di connessione al server: $e');
     }
   }
+
+  Future<Map<String, dynamic>> generateOfferCode(String offerId) async {
+    try {
+      final response = await ApiService.dio.post('/offers/$offerId/generate');
+      
+      if (response.statusCode != 200) {
+        throw Exception('Errore generazione codice offerta: ${response.data}');
+      }
+
+      final dynamic decoded = response.data;
+      return decoded['data'] as Map<String, dynamic>;
+    } catch (e) {
+      throw Exception('Errore: $e');
+    }
+  }
 }

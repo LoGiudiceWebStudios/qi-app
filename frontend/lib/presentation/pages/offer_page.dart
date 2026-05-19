@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'dart:async';
 import '../../core/theme/app_colors.dart';
 import '../../data/api/offer_api.dart';
 import '../../data/models/offer_model.dart';
@@ -88,65 +90,13 @@ class _OfferPageState extends State<OfferPage> {
   void _showCodeSheet(OfferModel offer) {
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: AppColors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Codice Offerta',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                offer.title,
-                style: const TextStyle(color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceSoft,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.borderSoft),
-                ),
-                child: Center(
-                  child: Text(
-                    offer.code.isEmpty ? 'CODICE NON DISPONIBILE' : offer.code,
-                    style: const TextStyle(
-                      letterSpacing: 1.2,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.accent,
-                    foregroundColor: AppColors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text('Chiudi'),
-                ),
-              ),
-            ],
-          ),
-        );
+        return _GenerateQRWidget(offer: offer);
       },
     );
   }
@@ -205,9 +155,9 @@ class _OfferPageState extends State<OfferPage> {
                       ),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: crossAxisCount,
-                        mainAxisSpacing: 14,
-                        crossAxisSpacing: 14,
-                        mainAxisExtent: 348,
+                        mainAxisSpacing: 20,
+                        crossAxisSpacing: 16,
+                        mainAxisExtent: 380, // Adeguato per ospitare i font più grandi
                       ),
                       itemCount: offers.length,
                       itemBuilder: (context, index) {
@@ -421,6 +371,136 @@ class _OffersErrorState extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+class _GenerateQRWidget extends StatefulWidget {
+  final OfferModel offer;
+
+  const _GenerateQRWidget({required this.offer});
+
+  @override
+  State<_GenerateQRWidget> createState() => _GenerateQRWidgetState();
+}
+
+class _GenerateQRWidgetState extends State<_GenerateQRWidget> {
+  late Future<Map<String, dynamic>> _generateFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _generateFuture = OfferApi().generateOfferCode(widget.offer.id.toString());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Codice Offerta',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            widget.offer.title,
+            style: const TextStyle(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 16),
+          FutureBuilder<Map<String, dynamic>>(
+            future: _generateFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceSoft,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.borderSoft),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'ERRORE NELLA GENERAZIONE',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              final codeData = snapshot.data!;
+              final code = codeData['code'] as String;
+              final expiresAt = DateTime.parse(codeData['expires_at'] as String).toLocal();
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Center(
+                    child: QrImageView(
+                      data: code,
+                      version: QrVersions.auto,
+                      size: 200.0,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceSoft,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.borderSoft),
+                    ),
+                    child: Center(
+                      child: Text(
+                        code,
+                        style: const TextStyle(
+                          letterSpacing: 1.2,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Scade alle: ${expiresAt.hour}:${expiresAt.minute.toString().padLeft(2, '0')} (Valido per 20 minuti)',
+                    style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                foregroundColor: AppColors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('Chiudi'),
+            ),
+          ),
+        ],
       ),
     );
   }

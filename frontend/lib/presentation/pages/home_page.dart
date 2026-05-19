@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/custom_card_widget.dart';
-import '../../data/api/event_api.dart';
-import '../../data/models/event_model.dart';
+import '../../data/api/home_api.dart';
+import '../../data/models/home_data.dart';
 import '../widgets/floating_nav_bar.dart';
 import '../manager/nav_provider.dart';
+import '../../core/services/notification_service.dart';
 import 'events_page.dart';
 import 'offer_page.dart';
 import 'scan_page.dart';
@@ -14,17 +14,8 @@ import 'profile_page.dart';
 
 import '../../data/services/api_service.dart';
 
-// Modelli Dati fittizi per offerta, la parte EventModel la rimuoviamo perché la leggiamo dal backend
-
-class OfferModel {
-  final String id;
-  final String title;
-  final String? imageUrl;
-  OfferModel({required this.id, required this.title, this.imageUrl});
-}
-
 class HomePage extends ConsumerStatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   ConsumerState<HomePage> createState() => _HomePageState();
@@ -38,19 +29,17 @@ class _HomePageState extends ConsumerState<HomePage> {
     0xFFc084fc,
   ); // Preso dal mockup originale
 
-  // Future per caricare gli eventi dal Backend
-  late Future<List<Event>> _eventsFuture;
+  // Future per caricare dati Home combinando tutto e gestendo orari
+  late Future<HomeData> _homeDataFuture;
 
   @override
   void initState() {
     super.initState();
-    _eventsFuture = EventApi().fetchEvents();
+    _homeDataFuture = HomeApi().fetchHomeData();
+    
+    // Richiedi i permessi per le notifiche solo dopo essere arrivati in Home (ovvero dopo il login)
+    NotificationService.initialize();
   }
-
-  final List<OfferModel> offers = [
-    OfferModel(id: '1', title: 'Offerta 1'),
-    OfferModel(id: '2', title: 'Offerta 2'),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -82,14 +71,27 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _buildHomeTab(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // TOP SECTION: Header con Immagine e Card Fluttuante
-          _buildTopHeader(context),
+    return FutureBuilder<HomeData>(
+      future: _homeDataFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Errore: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
+        } else if (!snapshot.hasData) {
+          return const Center(child: Text('Nessun dato'));
+        }
 
-          const SizedBox(height: 32),
+        final homeData = snapshot.data!;
+
+        return SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // TOP SECTION: Header con Immagine e Card Fluttuante
+              _buildTopHeader(context, homeData),
+
+              const SizedBox(height: 32),
 
           // QUICK ACTION
           Padding(
@@ -141,79 +143,78 @@ class _HomePageState extends ConsumerState<HomePage> {
           const SizedBox(height: 36),
 
           // EVENTI COLLEGATI AL BACKEND
-          FutureBuilder<List<Event>>(
-            future: _eventsFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Text(
-                      'Impossibile caricare gli eventi: ${snapshot.error}',
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  ),
+          if (homeData.events.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24.0),
+                child: Text(
+                  'Nessun evento in programma',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            )
+          else
+            _buildHorizontalSection(
+              title: 'Eventi',
+              actionText: 'Vedi tutto',
+              actionColor: greenColor,
+              itemsCount: homeData.events.length,
+              itemBuilder: (context, index) {
+                final event = homeData.events[index];
+                return CustomCardWidget(
+                  borderColor: greenColor,
+                  imageUrl:
+                      (event.imageUrl.isNotEmpty)
+                          ? (event.imageUrl.startsWith('http') 
+                              ? event.imageUrl 
+                              : "${ApiService.serverUrl}${event.imageUrl.startsWith('/') ? '' : '/'}${event.imageUrl.replaceAll('\\', '/')}")
+                          : null,
                 );
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Text(
-                      'Nessun evento in programma',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                );
-              }
-
-              // Dati ricevuti con successo!
-              final events = snapshot.data!;
-
-              return _buildHorizontalSection(
-                title: 'Eventi',
-                actionText: 'Vedi tutto',
-                actionColor: greenColor,
-                itemsCount: events.length,
-                itemBuilder: (context, index) {
-                  final event = events[index];
-                  return CustomCardWidget(
-                    borderColor: greenColor,
-                    imageUrl:
-                        (event.immagineUrl != null &&
-                                event.immagineUrl!.isNotEmpty)
-                            ? "${ApiService.serverUrl}${event.immagineUrl!.startsWith('/') ? '' : '/'}${event.immagineUrl!.replaceAll('\\', '/')}"
-                            : null,
-                  );
-                },
-              );
-            },
-          ),
+              },
+            ),
 
           const SizedBox(height: 36),
 
           // OFFERTE
-          _buildHorizontalSection(
-            title: 'Offerte',
-            actionText: 'Vedi tutto',
-            actionColor: yellowColor,
-            itemsCount: offers.length,
-            itemBuilder: (context, index) {
-              return CustomCardWidget(
-                borderColor: yellowColor,
-                imageUrl: offers[index].imageUrl,
-              );
-            },
-          ),
+          if (homeData.offers.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24.0),
+                child: Text(
+                  'Nessuna offerta in corso',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            )
+          else
+            _buildHorizontalSection(
+              title: 'Offerte',
+              actionText: 'Vedi tutto',
+              actionColor: yellowColor,
+              itemsCount: homeData.offers.length,
+              itemBuilder: (context, index) {
+                final offer = homeData.offers[index];
+                return CustomCardWidget(
+                  borderColor: yellowColor,
+                  imageUrl:
+                      (offer.imageUrl.isNotEmpty)
+                          ? (offer.imageUrl.startsWith('http')
+                              ? offer.imageUrl
+                              : "${ApiService.serverUrl}${offer.imageUrl.startsWith('/') ? '' : '/'}${offer.imageUrl.replaceAll('\\', '/')}")
+                          : null,
+                );
+              },
+            ),
 
           const SizedBox(height: 120),
         ],
       ),
     );
+    },
+    );
   }
 
-  Widget _buildTopHeader(BuildContext context) {
+  Widget _buildTopHeader(BuildContext context, HomeData homeData) {
     // Altezza aggiornata in modo che la card sia tutta dentro l'immagine
     return SizedBox(
       height: 380,
@@ -257,21 +258,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                     shape: BoxShape.circle,
                   ),
                   child: Center(
-                    child: SvgPicture.asset(
-                      'assets/icons/Logo.svg', // Se è un SVG vero
-                      width: 24,
-                      height: 24,
+                    child: Image.asset(
+                      'assets/icons/Logo.png',
+                      width: 40,
+                      height: 40,
                       fit: BoxFit.contain,
-                      // Fallback in caso SVG dia errore
-                      placeholderBuilder:
-                          (context) => const Text(
-                            'Q',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Open Sauce',
-                              fontSize: 18,
-                            ),
-                          ),
                     ),
                   ),
                 ),
@@ -336,31 +327,29 @@ class _HomePageState extends ConsumerState<HomePage> {
                             color: Colors.white,
                             shape: BoxShape.circle,
                           ),
-                          child: const Center(
-                            child: Text(
-                              'Q',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Open Sauce',
-                              ),
+                          child: Center(
+                            child: Image.asset(
+                              'assets/icons/Logo.png',
+                              width: 40,
+                              height: 40,
+                              fit: BoxFit.contain,
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // Pallino verde
+                        // Pallino verde / rosso
                         Container(
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: greenColor,
+                            color: homeData.isOpen ? greenColor : Colors.red,
                             shape: BoxShape.circle,
                           ),
                         ),
                         const SizedBox(width: 6),
-                        const Text(
-                          'Aperto',
-                          style: TextStyle(
+                        Text(
+                          homeData.isOpen ? 'Aperto' : 'Chiuso',
+                          style: const TextStyle(
                             fontFamily: 'Open Sauce',
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
@@ -378,9 +367,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        const Text(
-                          'Fino alle 02:00',
-                          style: TextStyle(
+                        Text(
+                          homeData.isOpen
+                              ? 'Fino alle ${homeData.closingTime}'
+                                : 'Apre alle', // TODO add opening_time from backend if needed
+                          style: const TextStyle(
                             fontFamily: 'Open Sauce',
                             color: Colors.black54,
                             fontWeight: FontWeight.w500,

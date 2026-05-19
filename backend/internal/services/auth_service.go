@@ -1,59 +1,162 @@
-package services
+﻿package services
 
 import (
-	"errors"
-	"qi-backend/internal/database"
-	"qi-backend/internal/models"
-	// "golang.org/x/crypto/bcrypt" - Per ora simuliamo senza bcrypt o token complessi per velocizzare, andrà decommentato in futuro.
+    "context"
+    "errors"
+    "os"
+    "time"
+
+    "qi-backend/internal/database"
+    "qi-backend/internal/models"
+
+    "github.com/golang-jwt/jwt/v5"
+    "golang.org/x/crypto/bcrypt"
+    "google.golang.org/api/idtoken"
+    "gorm.io/gorm"
 )
 
 type AuthService struct{}
 
 func NewAuthService() *AuthService {
-	return &AuthService{}
+    return &AuthService{}
 }
 
-// Login elabora testualmente il tentativo
-func (s *AuthService) Login(email, password string) (string, *models.User, error) {
-	var user models.User
+// GenerateJWT crea un token con l'ID dell'utente che scade dopo 72 ore
+func (s *AuthService) GenerateJWT(userID uint) (string, error) {
+    secret := os.Getenv("JWT_SECRET")
+    if secret == "" {
+        secret = "my_super_secret_key_change_me" // Fallback allineato con il middleware
+    }
 
-	// Ricerca l'utente per email
-	if err := database.DB.Where("email = ?", email).First(&user).Error; err != nil {
-		return "", nil, errors.New("Credenziali non valide o utente inesistente")
-	}
+    claims := jwt.MapClaims{
+        "sub": userID,
+        "exp": time.Now().Add(time.Hour * 72).Unix(),
+        "iat": time.Now().Unix(),
+    }
 
-	// Simulazione Check delle password in chiaro (in locale metti bcrypyt.CompareHashAndPassword)
-	if user.Password != password {
-		return "", nil, errors.New("Password errata")
-	}
-
-	// Ritorna un finto Token, da sostituire con libreria jwt-go
-	fakeToken := "jwt-simulato-12345qwe"
-
-	return fakeToken, &user, nil
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    return token.SignedString([]byte(secret))
 }
 
-func (s *AuthService) SignUp(nome, cognome, email, password string) (*models.User, error) {
-	var existing models.User
+func (s *AuthService) Login(req models.LoginRequest) (string, *models.User, error) {
+    var user models.User
 
-	database.DB.Where("email = ?", email).First(&existing)
-	if existing.ID != 0 {
-		return nil, errors.New("Questa email risulta già in uso")
-	}
+    if err := database.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            return "", nil, errors.New("credenziali non valide")
+        }
+        return "", nil, err
+    }
 
-	// Simulazione: Hash della password (da inserire successivamente via bcrypt)
-	// hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), 14)
+    if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+        return "", nil, errors.New("credenziali non valide")
+    }
 
-	newUser := models.User{
-		Nome:     nome,
-		Cognome:  cognome,
-		Email:    email,
-		Password: password, // Metti hashedPassword qui in prod
-	}
+    if req.FCMToken != "" && req.FCMToken != user.FCMToken {
+        user.FCMToken = req.FCMToken
+        database.DB.Save(&user)
+    }
 
-	if err := database.DB.Create(&newUser).Error; err != nil {
-		return nil, errors.New("Errore interno durante il salvataggio utente")
-	}
+    token, err := s.GenerateJWT(user.ID)
+    if err != nil {
+        return "", nil, errors.New("errore durante la generazione del token")
+    }
 
-	return &newUser, nil
+    return token, &user, nil
+}
+
+func (s *AuthService) SignUp(req models.RegisterRequest) (string, *models.User, error) {
+    var existing models.User
+
+    if err := database.DB.Where("email = ?", req.Email).First(&existing).Error; err == nil {
+        return "", nil, errors.New("questa email risulta gia in uso")
+    } else if !errors.Is(err, gorm.ErrRecordNotFound) {
+        return "", nil, err
+    }
+
+    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+    if err != nil {
+        return "", nil, errors.New("errore durante lhashing della password")
+    }
+
+    newUser := models.User{
+        Nome:     req.Nome,
+        Cognome:  req.Cognome,
+        Telefono: req.Telefono,
+        Email:    req.Email,
+        Password: string(hashedPassword),
+        Provider: "email",
+        FCMToken: req.FCMToken,
+    }
+
+    if err := database.DB.Create(&newUser).Error; err != nil {
+        return "", nil, errors.New("errore durante la creazione dell'utente")
+    }
+
+    token, err := s.GenerateJWT(newUser.ID)
+    if err != nil {
+        return "", nil, errors.New("errore durante la generazione del token")
+    }
+
+    return token, &newUser, nil
+}
+
+// SocialLogin cerca l'utente. Se non esiste, lo crea al volo basandosi sui dati del Social Provider.
+func (s *AuthService) SocialLogin(req models.SocialLoginRequest) (string, *models.User, error) {
+    var user models.User
+
+    if req.Provider == "google" {
+        if req.IdToken == "" {
+            return "", nil, errors.New("id token mancante per google login")
+        }
+        payload, err := idtoken.Validate(context.Background(), req.IdToken, "")
+        if err != nil {
+            return "", nil, errors.New("token google non valido o scaduto: " + err.Error())
+        }
+        if email, ok := payload.Claims["email"].(string); ok {
+            if email != req.Email {
+                req.Email = email // Usa l'email fidata del token
+            }
+        }
+    }
+
+    err := database.DB.Where("email = ?", req.Email).First(&user).Error
+    if err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            user = models.User{
+                Nome:     req.Nome,
+                Email:    req.Email,
+                SocialID: &req.SocialID,
+                Provider: req.Provider,
+                Ruolo:    "user",
+                FCMToken: req.FCMToken,
+            }
+            if dbErr := database.DB.Create(&user).Error; dbErr != nil {
+                return "", nil, errors.New("errore durante la creazione dell'account social")
+            }
+        } else {
+            return "", nil, err
+        }
+    } else {
+        updates := map[string]interface{}{}
+        
+        if user.SocialID == nil || *user.SocialID != req.SocialID {
+            updates["social_id"] = req.SocialID
+            updates["provider"] = req.Provider
+        }
+        if req.FCMToken != "" && user.FCMToken != req.FCMToken {
+            updates["fcm_token"] = req.FCMToken
+        }
+        
+        if len(updates) > 0 {
+            database.DB.Model(&user).Updates(updates)
+        }
+    }
+
+    token, err := s.GenerateJWT(user.ID)
+    if err != nil {
+        return "", nil, errors.New("errore durante la generazione del token")
+    }
+
+    return token, &user, nil
 }

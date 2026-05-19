@@ -51,6 +51,10 @@ func Connect() {
 		&models.User{},
 		&models.Event{},
 		&models.Offer{},
+		&models.OfferCode{},
+		&models.Category{},
+		&models.Product{},
+		&models.Setting{},
 	)
 	if err != nil {
 		log.Fatalf("❌ Errore durante l'automigrazione: %v", err)

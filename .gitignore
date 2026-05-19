@@ -11,6 +11,7 @@
 /backend/*.exe
 /backend/*.test
 /backend/*.out
+/backend/serviceAccountKey.json
 
 # Frontend: Flutter & Dart
 /frontend/.dart_tool/

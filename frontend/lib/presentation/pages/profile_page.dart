@@ -1,78 +1,320 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final _nameController = TextEditingController(text: 'Pippo Rossi');
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFAFBFA),
-      appBar: AppBar(
-        title: const Text('Profilo'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Stack(
         children: [
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFE5E7EB),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.person, color: Color(0xFF6B7280)),
-                ),
-                const SizedBox(width: 14),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Utente Qi',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'utente@example.com',
-                        style: TextStyle(color: Color(0xFF6B7280)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          // Sfondo condiviso
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/background.png',
+              fit: BoxFit.cover,
             ),
           ),
-          const SizedBox(height: 14),
-          _settingTile(Icons.receipt_long_outlined, 'I miei ordini'),
-          _settingTile(Icons.favorite_border, 'Preferiti'),
-          _settingTile(Icons.notifications_none, 'Notifiche'),
-          _settingTile(Icons.help_outline, 'Supporto'),
-          const SizedBox(height: 18),
-          OutlinedButton.icon(
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/login');
-            },
-            icon: const Icon(Icons.logout),
-            label: const Text('Esci'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFB91C1C),
-              side: const BorderSide(color: Color(0xFFFCA5A5)),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          Positioned.fill(
+            child: Container(color: Colors.black.withOpacity(0.3)),
+          ),
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: 36,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              title: const Text(
+                'Account Settings',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Open Sauce',
+                ),
+              ),
+              centerTitle: false,
+              titleSpacing: 0,
+            ),
+            body: SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 20.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Full Name",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontFamily: 'Open Sauce',
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    _buildTextField(controller: _nameController),
+                    const SizedBox(height: 18),
+
+                    // Email section
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Email Address:",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontFamily: 'Open Sauce',
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "pipporossi@gmail.com",
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 14,
+                                fontFamily: 'Open Sauce',
+                                decoration: TextDecoration.underline,
+                                decorationColor: Colors.white.withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Text(
+                          "Edit",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontFamily: 'Open Sauce',
+                            fontWeight: FontWeight.w500,
+                            decoration: TextDecoration.underline,
+                            decorationColor: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Divider(color: Colors.white.withOpacity(0.2), thickness: 1),
+                    const SizedBox(height: 14),
+
+                    // Password section
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Password:",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontFamily: 'Open Sauce',
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Text(
+                                  "******************",
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.7),
+                                    fontSize: 14,
+                                    fontFamily: 'Open Sauce',
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.chevron_right,
+                                  color: Colors.white.withOpacity(0.7),
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const Text(
+                          "Edit",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontFamily: 'Open Sauce',
+                            fontWeight: FontWeight.w500,
+                            decoration: TextDecoration.underline,
+                            decorationColor: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Divider(color: Colors.white.withOpacity(0.2), thickness: 1),
+                    const SizedBox(height: 20),
+
+                    // Saldo Punti Card
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: Colors.white.withOpacity(
+                          0.9,
+                        ), // Semi-trasparente per fondersi un po'
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 12,
+                              horizontal: 20,
+                            ),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF59E0B),
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(16),
+                                topRight: Radius.circular(16),
+                              ),
+                            ),
+                            child: const Text(
+                              "Saldo Punti",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Open Sauce',
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Column(
+                              children: [
+                                const Text(
+                                  "HAI UN TOTALE DI",
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Open Sauce',
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  "12",
+                                  style: TextStyle(
+                                    color: Color(0xFFF59E0B),
+                                    fontSize: 52,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1.0,
+                                    fontFamily: 'Open Sauce',
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  "PUNTI",
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Open Sauce',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Logout button
+                    GestureDetector(
+                      onTap: () {
+                        // Navigator.pushReplacementNamed(context, '/login');
+                      },
+                      child: Row(
+                        children: [
+                          const Text(
+                            "logout",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontFamily: 'Open Sauce',
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.underline,
+                              decorationColor: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.exit_to_app,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 25),
+
+                    // SALVA button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 60,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // Salva logic
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF59E0B),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(11.0),
+                          ),
+                        ),
+                        child: const Text(
+                          "SALVA",
+                          style: TextStyle(
+                            fontFamily: 'Open Sauce',
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 60), // Ridotto lo spazio finale per la bottom bar
+                  ],
+                ),
               ),
             ),
           ),
@@ -81,17 +323,45 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _settingTile(IconData icon, String title) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: ListTile(
-        leading: Icon(icon, color: const Color(0xFF4B5563)),
-        title: Text(title),
-        trailing: const Icon(Icons.chevron_right),
+  Widget _buildTextField({required TextEditingController controller}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+        child: TextField(
+          controller: controller,
+          style: const TextStyle(
+            fontFamily: 'Open Sauce',
+            color: Colors.white,
+            fontSize: 16,
+          ),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.black.withOpacity(0.2),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 16,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: Colors.white, width: 1.5),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: Colors.white.withOpacity(0.3),
+                width: 1.0,
+              ),
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: Colors.white.withOpacity(0.3),
+                width: 1.0,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

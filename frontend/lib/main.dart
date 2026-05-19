@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/pages/home_page.dart';
 import 'presentation/pages/splash_screen.dart';
 import 'presentation/pages/login_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inizializza Firebase
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint("Errore inizializzazione Firebase: $e");
+  }
+
   runApp(const ProviderScope(child: QiApp()));
 }
 

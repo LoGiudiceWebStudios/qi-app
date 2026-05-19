@@ -1,33 +1,108 @@
 package services
 
 import (
+	"fmt"
+	"time"
+
+	"qi-backend/internal/database"
 	"qi-backend/internal/models"
 )
 
 type HomeService struct {
-	// Qui poi ci finirà il DB o repository pattern per leggere dal DB reale
 }
 
 func NewHomeService() *HomeService {
 	return &HomeService{}
 }
 
-// GetHomeData simula per adesso un fetch dal database degli eventi, offerte e orari.
+// GetHomeData fetch from database
 func (s *HomeService) GetHomeData() (*models.HomeData, error) {
-	// Mock response che andrà a popolare la Home page di Qi
+
+	var forcedStatus models.Setting
+	database.DB.Where("key = ?", "forced_status").Attrs(models.Setting{Value: "auto"}).FirstOrCreate(&forcedStatus)
+
+	var closingTime models.Setting
+	database.DB.Where("key = ?", "closing_time").Attrs(models.Setting{Value: "02:00"}).FirstOrCreate(&closingTime)
+
+	var openingTime models.Setting
+	database.DB.Where("key = ?", "opening_time").Attrs(models.Setting{Value: "18:00"}).FirstOrCreate(&openingTime)
+
+	isOpen := false
+	loc, _ := time.LoadLocation("Europe/Rome")
+	nowH := time.Now().In(loc).Format("15:04")
+	// Assicure padding zeri per il confronto (es. "9:00" -> "09:00")
+	padTime := func(t string) string {
+		if len(t) == 4 { // e.g. "9:00"
+			return "0" + t
+		}
+		return t
+	}
+
+	opTime := padTime(openingTime.Value)
+	clTime := padTime(closingTime.Value)
+
+	if forcedStatus.Value == "open" {
+		isOpen = true
+	} else if forcedStatus.Value == "closed" {
+		isOpen = false
+	} else {
+		// Logica auto
+		if opTime > clTime {
+			if nowH >= opTime || nowH < clTime {
+				isOpen = true
+			}
+		} else {
+			if nowH >= opTime && nowH < clTime {
+				isOpen = true
+			}
+		}
+	}
+
+	// Recuperiamo gli eventi
+	var events []models.Event
+	database.DB.Where("data_evento >= ?", time.Now().Add(-12*time.Hour)).Order("data_evento asc").Limit(3).Find(&events)
+	var homeEvents []models.HomeEvent
+	for _, e := range events {
+		homeEvents = append(homeEvents, models.HomeEvent{
+			ID:       fmt.Sprint(e.ID),
+			Title:    e.Titolo,
+			ImageUrl: e.ImmagineURL,
+			Date:     e.DataEvento.Format("2006-01-02"),
+		})
+	}
+	if len(homeEvents) == 0 {
+		homeEvents = []models.HomeEvent{}
+	}
+
+	// Recuperiamo offerte
+	var offers []models.Offer
+	nowOff := time.Now()
+	startOfDayOff := time.Date(nowOff.Year(), nowOff.Month(), nowOff.Day(), 0, 0, 0, 0, nowOff.Location())
+	database.DB.Where("valida_dal <= ? AND valida_fino >= ?", nowOff, startOfDayOff).Limit(3).Find(&offers)
+	var homeOffers []models.HomeOffer
+	for _, o := range offers {
+		homeOffers = append(homeOffers, models.HomeOffer{
+			ID:       fmt.Sprint(o.ID),
+			Title:    o.Titolo,
+			ImageUrl: o.ImmagineURL,
+		})
+	}
+	if len(homeOffers) == 0 {
+		homeOffers = []models.HomeOffer{}
+	}
+
+	nextEventTitle := "Nessun evento in programma"
+	if len(homeEvents) > 0 {
+		nextEventTitle = homeEvents[0].Title
+	}
+
 	return &models.HomeData{
-		IsOpen:       true,
-		ClosingTime:  "02:00",
+		IsOpen:       isOpen,
+		OpeningTime:  openingTime.Value,
+		ClosingTime:  closingTime.Value,
 		LocationName: "Via Luigi Enaudi",
-		NextEvent:    "Karaoke Night",
-		Events: []models.HomeEvent{
-			{ID: "1", Title: "Serata DJ Set", ImageUrl: "", Date: "2026-04-18"},
-			{ID: "2", Title: "Degustazione Birre", ImageUrl: "", Date: "2026-04-20"},
-			{ID: "3", Title: "Karaoke Night", ImageUrl: "", Date: "2026-04-22"},
-		},
-		Offers: []models.HomeOffer{
-			{ID: "1", Title: "Menu Burger a 10€", ImageUrl: ""},
-			{ID: "2", Title: "2x1 Spritz", ImageUrl: ""},
-		},
+		NextEvent:    nextEventTitle,
+		Events:       homeEvents,
+		Offers:       homeOffers,
 	}, nil
 }

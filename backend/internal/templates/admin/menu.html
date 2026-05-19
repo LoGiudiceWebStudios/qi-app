@@ -1,0 +1,105 @@
+{{ template "layout_top" . }}
+
+<div class="space-y-8">
+    <!-- Categorie Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-bold text-gray-800">Categorie</h2>
+        </div>
+        <div class="p-6">
+            <form action="/admin/menu/categories" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <input type="text" name="name" placeholder="Nome Categoria (es: Panini)" class="border rounded-md px-3 py-2" required>
+                <input type="text" name="description" placeholder="Sottotitolo (es: 12 varianti)" class="border rounded-md px-3 py-2">
+                <input type="file" name="immagine" accept="image/*" class="border rounded-md px-3 py-2 bg-white">
+                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium transition-colors w-full">Aggiungi Categoria</button>
+            </form>
+            
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 border-b border-gray-200 text-sm text-gray-500 uppercase tracking-wider">
+                        <th class="px-6 py-3 font-medium w-16">Foto</th>
+                        <th class="px-6 py-3 font-medium">ID</th>
+                        <th class="px-6 py-3 font-medium">Nome Categoria</th>
+                        <th class="px-6 py-3 font-medium">Sottotitolo</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {{ range .Categories }}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            {{ if .ImageURL }}
+                                <img src="{{ .ImageURL }}" class="w-12 h-12 rounded object-cover shadow border">
+                            {{ else }}
+                                <div class="w-12 h-12 rounded bg-gray-200 border flex items-center justify-center text-xs text-gray-400">N/D</div>
+                            {{ end }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ .ID }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ .Name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ .Description }}</td>
+                    </tr>
+                    {{ else }}
+                    <tr>
+                        <td colspan="2" class="px-6 py-6 text-center text-gray-500">Nessuna categoria trovata. Inseriscine una!</td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Prodotti Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-bold text-gray-800">Prodotti / Piatti</h2>
+        </div>
+        <div class="p-6">
+            <form action="/admin/menu/products" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <select name="category_id" class="border rounded-md px-3 py-2 bg-white h-11" required>
+                    <option value="">Seleziona Categoria...</option>
+                    {{ range .Categories }}
+                        <option value="{{ .ID }}">{{ .Name }}</option>
+                    {{ end }}
+                </select>
+                <div class="flex gap-2">
+                    <input type="text" name="name" placeholder="Nome prodotto" class="w-full border rounded-md px-3 py-2 h-11" required>
+                    <input type="number" step="0.01" name="price" placeholder="Prezzo (€)" class="w-32 border rounded-md px-3 py-2 h-11" required>
+                </div>
+                
+                <input type="text" name="short_desc" placeholder="Descrizione breve / Etichetta" class="col-span-1 border rounded-md px-3 py-2 h-11">
+                <input type="file" name="immagine" accept="image/*" class="col-span-1 border rounded-md px-3 py-2 h-11 bg-white">
+                <textarea name="description" placeholder="Descrizione lunga (ingredienti, dettagli, allergeni)" rows="3" class="col-span-1 md:col-span-2 border rounded-md px-3 py-2 text-sm"></textarea>
+                
+                <div class="col-span-1 md:col-span-2 flex justify-end">
+                    <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-8 py-2 rounded-md font-medium transition-colors">Aggiungi Prodotto</button>
+                </div>
+            </form>
+
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 border-b border-gray-200 text-sm text-gray-500 uppercase tracking-wider">
+                        <th class="px-6 py-3 font-medium">Prodotto</th>
+                        <th class="px-6 py-3 font-medium">Prezzo</th>
+                        <th class="px-6 py-3 font-medium">Categoria</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {{ range .Categories }}
+                        {{ $catName := .Name }}
+                        {{ range .Products }}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm text-gray-900">
+                                <strong>{{ .Name }}</strong><br>
+                                {{ if .Description }}<span class="text-xs text-gray-500">{{ .Description }}</span>{{ end }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">€ {{ .Price }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $catName }}</td>
+                        </tr>
+                        {{ end }}
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{{ template "layout_bottom" . }}

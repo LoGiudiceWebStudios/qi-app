@@ -1,6 +1,4 @@
-package models
-
-// Queste struct serviranno per definire la risposta della home page
+﻿package models
 
 type HomeEvent struct {
 	ID       string `json:"id"`
@@ -27,6 +25,7 @@ type OfferAPI struct {
 
 type HomeData struct {
 	IsOpen       bool        `json:"isOpen"`
+	OpeningTime  string      `json:"openingTime"`
 	ClosingTime  string      `json:"closingTime"`
 	LocationName string      `json:"locationName"`
 	NextEvent    string      `json:"nextEvent"`

@@ -1,96 +1,174 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../../core/theme/app_colors.dart';
+import '../../data/models/category.dart';
+import '../../data/services/api_service.dart';
+import '../widgets/custom_top_bar.dart';
+import 'category_products_page.dart';
 
-class MenuPage extends StatelessWidget {
+class MenuPage extends StatefulWidget {
   const MenuPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final sections = [
-      _MenuSection(
-        title: 'Burger Signature',
-        items: const ['Qi Smash', 'Double Focus', 'Veg Crunch'],
-      ),
-      _MenuSection(
-        title: 'Piatti Veloci',
-        items: const ['Caesar Bowl', 'Wrap Pollo', 'Toast Club'],
-      ),
-      _MenuSection(
-        title: 'Drink',
-        items: const ['Lemon Soda', 'Cold Brew', 'Fresh Orange'],
-      ),
-    ];
+  _MenuPageState createState() => _MenuPageState();
+}
 
+class _MenuPageState extends State<MenuPage> {
+  List<Category> categories = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCategories();
+  }
+
+  Future<void> _fetchCategories() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiService.baseUrl}/categories'),
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body)['data'] as List;
+        setState(() {
+          categories = data.map((json) => Category.fromJson(json)).toList();
+        });
+      }
+    } catch (e) {
+      print('Error fetching categories: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFBFA),
-      appBar: AppBar(
-        title: const Text('Menu'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
-        itemCount: sections.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 14),
-        itemBuilder: (context, index) {
-          final section = sections[index];
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
+      body: Column(
+        children: [
+          CustomTopBar(
+            title: 'MENU\'',
+            backgroundColor: const Color(0xFF008F30), // Verde richiesto
+            icon: Icons.menu_book,
+            showStar: false,
+            titleStyle: const TextStyle(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
+              fontSize: 27,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.2,
+              fontFamily: 'Open Sauce',
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  section.title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ...section.items.map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.circle,
-                          size: 8,
-                          color: Color(0xFF008F30),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          item,
-                          style: const TextStyle(
-                            color: Color(0xFF374151),
-                            fontSize: 14,
+          ),
+          Expanded(
+            child:
+                categories.isEmpty
+                    ? const Center(child: CircularProgressIndicator())
+                    : GridView.builder(
+                      padding: const EdgeInsets.fromLTRB(
+                        16,
+                        24,
+                        16,
+                        120,
+                      ), // Spaziatura laterale ridotta per allargare le card
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio:
+                            0.90, // Le card del mockup sono leggermente più alte che larghe
+                      ),
+                      itemCount: categories.length,
+                      itemBuilder: (context, index) {
+                        final category = categories[index];
+                        return InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => CategoryProductsPage(
+                                      categoryId: category.id,
+                                    ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(
+                                color: const Color(0xFFF3F4F6),
+                                width: 1.0,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.25),
+                                  blurRadius: 2,
+                                  spreadRadius: 0,
+                                  offset: const Offset(0, 0),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (category.imageUrl.isNotEmpty)
+                                  Image.network(
+                                    '${ApiService.serverUrl}${category.imageUrl}',
+                                    height: 100,
+                                    fit: BoxFit.contain,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            const Icon(
+                                              Icons.fastfood,
+                                              size: 60,
+                                              color: Colors.grey,
+                                            ),
+                                  )
+                                else
+                                  const Icon(
+                                    Icons.fastfood,
+                                    size: 60,
+                                    color: Colors.grey,
+                                  ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  category.name,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    fontFamily: 'Open Sauce',
+                                    color: Color(0xFF1E293B),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12.0,
+                                  ),
+                                  child: Text(
+                                    category.description.isNotEmpty
+                                        ? category.description
+                                        : '',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      fontFamily: 'Open Sauce',
+                                      color: Color(0xFF64748B),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
-}
-
-class _MenuSection {
-  final String title;
-  final List<String> items;
-
-  const _MenuSection({required this.title, required this.items});
 }

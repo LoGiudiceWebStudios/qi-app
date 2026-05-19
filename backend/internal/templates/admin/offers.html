@@ -1,0 +1,57 @@
+{{ template "layout_top" . }}
+
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <h2 class="text-xl font-bold text-gray-800">Elenco Offerte</h2>
+        <a href="/admin/offers/new" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+            + Crea Nuova Offerta
+        </a>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-200 text-sm text-gray-500 uppercase tracking-wider">
+                    <th class="px-6 py-3 font-medium">ID</th>
+                    <th class="px-6 py-3 font-medium">Immagine</th>
+                    <th class="px-6 py-3 font-medium">Titolo</th>
+                    <th class="px-6 py-3 font-medium">Validità</th>
+                    <th class="px-6 py-3 font-medium">Codice Sconto</th>
+                    <th class="px-6 py-3 text-right font-medium">Azioni</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {{ range .Offers }}
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 text-sm text-gray-600">#{{ .ID }}</td>
+                    <td class="px-6 py-4">
+                        {{ if .ImmagineURL }}
+                            <img src="/{{ .ImmagineURL }}" class="h-10 w-10 object-cover rounded-md border border-gray-300">
+                        {{ else }}
+                            <div class="h-10 w-10 bg-gray-200 rounded-md flex items-center justify-center text-xs text-gray-400 border border-gray-300">N/D</div>
+                        {{ end }}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-900 font-medium">{{ .Titolo }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">
+                        {{ .ValidaDal.Format "02/01/2006" }} - {{ .ValidaFino.Format "02/01/2006" }}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600">{{ .CodiceSconto }}</td>
+                    <td class="px-6 py-4 text-right text-sm">
+                        <form method="POST" action="/admin/offers/{{ .ID }}/delete" onsubmit="return confirm('Sicuro di voler eliminare questa offerta?');" class="inline">
+                            <button type="submit" class="text-red-500 hover:text-red-700 font-medium ml-4">Elimina</button>
+                        </form>
+                    </td>
+                </tr>
+                {{ else }}
+                <tr>
+                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                        Nessuna offerta trovata.
+                    </td>
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{{ template "layout_bottom" . }}

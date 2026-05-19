@@ -11,6 +11,7 @@ import (
 
 	"qi-backend/internal/database"
 	"qi-backend/internal/models"
+	"qi-backend/internal/services"
 )
 
 type EventsHandler struct{}
@@ -88,6 +89,15 @@ func (h *EventsHandler) CreateEvent(c *gin.Context) {
 	}
 
 	if err := database.DB.Create(&evento).Error; err == nil {
+		// Invia notifica agli user
+		var users []models.User
+		database.DB.Where("fcm_token != ''").Find(&users)
+		var tokens []string
+		for _, u := range users {
+			tokens = append(tokens, u.FCMToken)
+		}
+		services.SendMulticastNotification("Nuovo Evento: "+titolo, "Scopri il nuovo evento: "+titolo, tokens)
+
 		c.Redirect(http.StatusFound, "/admin/events")
 		return
 	}
