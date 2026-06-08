@@ -50,7 +50,7 @@ class CustomTopBar extends StatelessWidget {
               fontWeight: FontWeight.w800,
               letterSpacing: 1.0,
             ))
-        .copyWith(fontFamily: AppFonts.syne);
+        .copyWith(fontFamily: AppFonts.openSauce);
 
     return Container(
       color: backgroundColor,

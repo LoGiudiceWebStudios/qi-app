@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../../core/theme/app_colors.dart';
 import '../../data/models/category.dart';
 import '../../data/services/api_service.dart';
 import '../widgets/custom_top_bar.dart';
@@ -87,6 +86,7 @@ class _MenuPageState extends State<MenuPage> {
                                 builder:
                                     (context) => CategoryProductsPage(
                                       categoryId: category.id,
+                                      categoryName: category.name,
                                     ),
                               ),
                             );

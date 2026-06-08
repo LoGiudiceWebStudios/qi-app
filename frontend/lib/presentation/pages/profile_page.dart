@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../data/services/auth_api_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -9,7 +10,34 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final _nameController = TextEditingController(text: 'Pippo Rossi');
+  final _nameController = TextEditingController();
+  String _email = '';
+  int _punti = 0;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final profile = await AuthApiService.getProfile();
+      if (mounted) {
+        setState(() {
+          final nome = profile['nome'] ?? '';
+          final cognome = profile['cognome'] ?? '';
+          _nameController.text = "$nome $cognome".trim();
+          _email = profile['email'] ?? '';
+          _punti = profile['punti'] ?? 0;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -97,7 +125,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              "pipporossi@gmail.com",
+                              _email.isNotEmpty ? _email : "...",
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.7),
                                 fontSize: 14,
@@ -227,8 +255,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                const Text(
-                                  "12",
+                                Text(
+                                  _punti.toString(),
                                   style: TextStyle(
                                     color: Color(0xFFF59E0B),
                                     fontSize: 52,
@@ -258,8 +286,11 @@ class _ProfilePageState extends State<ProfilePage> {
 
                     // Logout button
                     GestureDetector(
-                      onTap: () {
-                        // Navigator.pushReplacementNamed(context, '/login');
+                      onTap: () async {
+                        await AuthApiService.logout();
+                        if (context.mounted) {
+                          Navigator.pushReplacementNamed(context, '/login');
+                        }
                       },
                       child: Row(
                         children: [
@@ -291,8 +322,29 @@ class _ProfilePageState extends State<ProfilePage> {
                       width: double.infinity,
                       height: 60,
                       child: ElevatedButton(
-                        onPressed: () {
-                          // Salva logic
+                        onPressed: () async {
+                           // Splittiamo il nome dal cognome in modo basic dal controller (opzionale o avanzato a seconda)
+                           final nameParts = _nameController.text.trim().split(' ');
+                           final nome = nameParts.isNotEmpty ? nameParts.first : '';
+                           final cognome = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+                           
+                           setState(() => _isLoading = true);
+                           try {
+                             await AuthApiService.updateProfile(nome: nome, cognome: cognome);
+                             if (context.mounted) {
+                               ScaffoldMessenger.of(context).showSnackBar(
+                                 const SnackBar(content: Text('Profilo aggiornato!')),
+                               );
+                             }
+                           } catch (e) {
+                             if (context.mounted) {
+                               ScaffoldMessenger.of(context).showSnackBar(
+                                 const SnackBar(content: Text('Errore aggiornamento')),
+                               );
+                             }
+                           } finally {
+                             if (mounted) setState(() => _isLoading = false);
+                           }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFF59E0B),

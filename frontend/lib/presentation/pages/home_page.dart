@@ -6,6 +6,7 @@ import '../../data/models/home_data.dart';
 import '../widgets/floating_nav_bar.dart';
 import '../manager/nav_provider.dart';
 import '../../core/services/notification_service.dart';
+import '../../data/services/secure_storage_service.dart';
 import 'events_page.dart';
 import 'offer_page.dart';
 import 'scan_page.dart';
@@ -41,6 +42,16 @@ class _HomePageState extends ConsumerState<HomePage> {
     NotificationService.initialize();
   }
 
+  void _showLoginRequiredMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Il login è necessario per accedere a questa sezione.'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+    Navigator.pushReplacementNamed(context, '/login');
+  }
+
   @override
   Widget build(BuildContext context) {
     final selectedIndex = ref.watch(bottomNavIndexProvider);
@@ -51,20 +62,32 @@ class _HomePageState extends ConsumerState<HomePage> {
       body: IndexedStack(
         index: selectedIndex,
         children: [
-          _buildHomeTab(context),
-          const OfferPage(),
-          const ScanPage(),
-          const MenuPage(),
-          const ProfilePage(),
+          selectedIndex == 0 ? _buildHomeTab(context) : const SizedBox.shrink(),
+          selectedIndex == 1 ? const OfferPage() : const SizedBox.shrink(),
+          selectedIndex == 2 ? const ScanPage() : const SizedBox.shrink(),
+          selectedIndex == 3 ? const MenuPage() : const SizedBox.shrink(),
+          selectedIndex == 4 ? const ProfilePage() : const SizedBox.shrink(),
         ],
       ),
       bottomNavigationBar: SafeArea(
         top: false,
         child: FloatingNavBar(
           currentIndex: selectedIndex,
-          onTap: (index) {
-            ref.read(bottomNavIndexProvider.notifier).setIndex(index);
-          },
+          onTap: (index) async {
+              if (index == 0) {
+                setState(() {
+                  _homeDataFuture = HomeApi().fetchHomeData();
+                });
+                ref.read(bottomNavIndexProvider.notifier).setIndex(index);
+              } else {
+                final token = await SecureStorageService.getToken();
+                if (token == null) {
+                  _showLoginRequiredMessage();
+                } else {
+                  ref.read(bottomNavIndexProvider.notifier).setIndex(index);
+                }
+              }
+            },
         ),
       ),
     );
@@ -116,22 +139,43 @@ class _HomePageState extends ConsumerState<HomePage> {
                       'Menu',
                       Icons.restaurant_menu_rounded,
                       greenColor,
+                      onTap: () async {
+                        final token = await SecureStorageService.getToken();
+                        if (token == null) {
+                          _showLoginRequiredMessage();
+                        } else {
+                          ref.read(bottomNavIndexProvider.notifier).setIndex(3);
+                        }
+                      },
                     ),
                     const SizedBox(width: 12),
                     _buildQuickActionButton(
                       'Offerte',
                       Icons.local_offer_outlined,
                       yellowColor,
+                      onTap: () async {
+                        final token = await SecureStorageService.getToken();
+                        if (token == null) {
+                          _showLoginRequiredMessage();
+                        } else {
+                          ref.read(bottomNavIndexProvider.notifier).setIndex(1);
+                        }
+                      },
                     ),
                     const SizedBox(width: 12),
                     _buildQuickActionButton(
                       'Eventi',
                       Icons.calendar_month_outlined,
                       purpleColor,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const EventsPage()),
-                        );
+                      onTap: () async {
+                        final token = await SecureStorageService.getToken();
+                        if (token == null) {
+                          _showLoginRequiredMessage();
+                        } else {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const EventsPage()),
+                          );
+                        }
                       },
                     ),
                   ],
@@ -435,13 +479,19 @@ class _HomePageState extends ConsumerState<HomePage> {
                                 ),
                               ),
                               const SizedBox(height: 2),
-                              const Text(
-                                'Karaoke Night',
-                                style: TextStyle(
+                              Text(
+                                homeData.nextEvent.isNotEmpty
+                                    ? homeData.nextEvent
+                                    : (homeData.events.isNotEmpty
+                                        ? homeData.events.first.title
+                                        : 'Nessun evento'),
+                                style: const TextStyle(
                                   fontFamily: 'Open Sauce',
                                   color: Colors.black54,
                                   fontSize: 12,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
@@ -532,13 +582,27 @@ class _HomePageState extends ConsumerState<HomePage> {
                   color: Color(0xFF1F2937),
                 ),
               ),
-              Text(
-                actionText,
-                style: TextStyle(
-                  fontFamily: 'Open Sauce',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: actionColor,
+              GestureDetector(
+                onTap: () async {
+                  final token = await SecureStorageService.getToken();
+                  if (token == null) {
+                    _showLoginRequiredMessage();
+                  } else {
+                    if (title == 'Eventi') {
+                      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EventsPage()));
+                    } else if (title == 'Offerte') {
+                      ref.read(bottomNavIndexProvider.notifier).setIndex(1);
+                    }
+                  }
+                },
+                child: Text(
+                  actionText,
+                  style: TextStyle(
+                    fontFamily: 'Open Sauce',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: actionColor,
+                  ),
                 ),
               ),
             ],
@@ -559,3 +623,5 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 }
+
+

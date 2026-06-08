@@ -1,4 +1,4 @@
-﻿{{ template "layout_top" . }}
+{{ template "layout_top" . }}
 
 <div class="mb-6">
     <p class="text-gray-600">Usa questo strumento per inviare istantaneamente una notifica push a tutti gli utenti che hanno installato l'app e accettato i permessi.</p>
@@ -48,11 +48,11 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Giorno</label>
                     <select name="giorno" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        <option value="1">Lunedì</option>
-                        <option value="2">Martedì</option>
-                        <option value="3">Mercoledì</option>
-                        <option value="4">Giovedì</option>
-                        <option value="5">Venerdì</option>
+                        <option value="1">Luned�</option>
+                        <option value="2">Marted�</option>
+                        <option value="3">Mercoled�</option>
+                        <option value="4">Gioved�</option>
+                        <option value="5">Venerd�</option>
                         <option value="6">Sabato</option>
                         <option value="0">Domenica</option>
                     </select>
@@ -64,7 +64,7 @@
             </div>
 
             <div class="pt-2">
-                <button type="button" onclick="alert('Funzionalità in fase di sviluppo!')" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     Programma Notifica
                 </button>
             </div>
@@ -73,13 +73,13 @@
 
 </div>
 
-<!-- Info Automazioni Attive -->
+<!-- Lista Notifiche Programmate --><div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">    <h2 class="text-xl text-gray-800 font-semibold mb-4 border-b border-gray-100 pb-2">Notifiche Programmate Attive</h2>    {{ if .Schedules }}    <div class="overflow-x-auto">        <table class="min-w-full divide-y divide-gray-200">            <thead class="bg-gray-50">                <tr>                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Titolo / Messaggio</th>                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giorno</th>                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ora</th>                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Azioni</th>                </tr>            </thead>            <tbody class="bg-white divide-y divide-gray-200">                {{ range .Schedules }}                <tr>                    <td class="px-6 py-4">                        <div class="text-sm font-medium text-gray-900">{{ .Title }}</div>                        <div class="text-sm text-gray-500">{{ .Message }}</div>                    </td>                    <td class="px-6 py-4 whitespace-nowrap">                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">                            {{ if eq .DayOfWeek 1 }}Luned�{{ else if eq .DayOfWeek 2 }}Marted�{{ else if eq .DayOfWeek 3 }}Mercoled�{{ else if eq .DayOfWeek 4 }}Gioved�{{ else if eq .DayOfWeek 5 }}Venerd�{{ else if eq .DayOfWeek 6 }}Sabato{{ else if eq .DayOfWeek 0 }}Domenica{{ end }}                        </span>                    </td>                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ .Time }}</td>                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">                        <form action="/admin/notifications/schedule/{{ .ID }}/delete" method="POST" onsubmit="return confirm('Eliminare questa notifica programmata?');">                            <button type="submit" class="text-red-600 hover:text-red-900 font-semibold">Elimina</button>                        </form>                    </td>                </tr>                {{ end }}            </tbody>        </table>    </div>    {{ else }}    <p class="text-gray-500 text-sm italic">Nessuna notifica programmata al momento.</p>    {{ end }}</div><!-- Info Automazioni Attive -->
 <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
     <h2 class="text-xl text-gray-800 font-semibold mb-4 leading-loose">Automazioni Predefinite</h2>
     <div class="flex items-center space-x-2 text-gray-600">
         <svg class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         <p>
-            L'app notificherà automaticamente tutti gli utenti alla creazione di <strong>nuovi eventi</strong> o di <strong>nuove offerte</strong> nel gestionale.
+            L'app notificher� automaticamente tutti gli utenti alla creazione di <strong>nuovi eventi</strong> o di <strong>nuove offerte</strong> nel gestionale.
         </p>
     </div>
 </div>
@@ -104,3 +104,4 @@
 </script>
 
 {{ template "layout_bottom" . }}
+

@@ -9,7 +9,7 @@ plugins {
 android {
     namespace = "com.qi.app"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "23.1.7779620" // Hardcoded to fix NDK 28 RC compiler bug on Windows
+    ndkVersion = "26.1.10909125" // Updated to match plugin dependencies
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

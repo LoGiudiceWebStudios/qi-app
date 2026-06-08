@@ -5,10 +5,10 @@ class FloatingNavBar extends StatelessWidget {
   final Function(int) onTap;
 
   const FloatingNavBar({
-    Key? key,
+    super.key,
     required this.currentIndex,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +39,7 @@ class FloatingNavBar extends StatelessWidget {
         children: [
           _buildNavItem(0, Icons.home_outlined, "Home"),
           _buildNavItem(1, Icons.local_activity_outlined, "Offerte"),
-          _buildNavItem(2, Icons.qr_code_scanner, "Scan"),
+          _buildNavItem(2, Icons.card_giftcard, "Qi Card"),
           _buildNavItem(3, Icons.restaurant_menu, "Menu"),
           _buildNavItem(4, Icons.person_outline, "Profilo"),
         ],
@@ -49,8 +49,8 @@ class FloatingNavBar extends StatelessWidget {
 
   Widget _buildNavItem(int index, IconData icon, String label) {
     final isSelected = currentIndex == index;
-    // Colore richiesto per lo stato attivo: #F59E0B
-    final activeColor = const Color(0xFFF59E0B);
+    // Colore richiesto per lo stato attivo: #E9B416
+    final activeColor = const Color(0xFFE9B416);
     final inactiveColor = const Color(0xFF9CA3AF);
 
     return GestureDetector(

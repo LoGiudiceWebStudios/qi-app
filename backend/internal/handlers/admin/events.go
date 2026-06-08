@@ -105,3 +105,12 @@ func (h *EventsHandler) CreateEvent(c *gin.Context) {
 	// In caso di errore
 	c.String(http.StatusInternalServerError, "Errore salvataggio evento")
 }
+
+func (h *EventsHandler) DeleteEvent(c *gin.Context) {
+	id := c.Param("id")
+	if err := database.DB.Delete(&models.Event{}, id).Error; err != nil {
+		c.String(http.StatusInternalServerError, "Errore durante l'eliminazione dell'evento")
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/admin/events")
+}

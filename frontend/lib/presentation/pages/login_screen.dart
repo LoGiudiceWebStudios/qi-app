@@ -1,5 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -17,13 +19,15 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final GoogleSignIn _googleSignIn = GoogleSignIn(serverClientId: '675445824557-t3kmlhpl7in36a9i83qbrhromiu976sv.apps.googleusercontent.com');
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+  serverClientId: 'INCOLLA_QUI_IL_TUO_WEB_CLIENT_ID.apps.googleusercontent.com',
+);
   bool _obscurePassword = true;
   bool _savePassword = false;
 
   bool _isLoading = false;
 
-  final Color orangeColor = const Color(0xFFF59E0B);
+  final Color orangeColor = const Color(0xFFE9B416);
 
   // Focus nodes per chiudere la tastiera tappando fuori
   final _emailFocus = FocusNode();
@@ -158,22 +162,24 @@ class _LoginScreenState extends State<LoginScreen> {
             backgroundColor:
                 Colors.transparent, // Permette di vedere lo sfondo dietro
             body: SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24.0,
-                  vertical: 40.0,
-                ),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 40),
-
-                    // LOGO
-                    Image.asset(
-                      'assets/icons/Logo.png',
-                      width: 212,
-                      height: 212,
-                      fit: BoxFit.contain,
+              child: Stack(
+                children: [
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0,
+                      vertical: 40.0,
                     ),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 40),
+
+                        // LOGO
+                        Image.asset(
+                          'assets/icons/Logo.png',
+                          width: 212,
+                          height: 212,
+                          fit: BoxFit.contain,
+                        ),
 
                     const SizedBox(height: 30),
 
@@ -365,19 +371,73 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 12),
 
                     // Terms
-                    Text(
-                      "By continuing, you agree to our Terms of Service\nand Privacy policy",
+                    RichText(
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                        fontSize: 12,
+                      text: TextSpan(
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 12,
+                          fontFamily: 'Open Sauce',
+                        ),
+                        children: [
+                          const TextSpan(text: "By continuing, you agree to our "),
+                          TextSpan(
+                            text: "Terms of Service",
+                            style: const TextStyle(
+                              color: Color(0xFFE9B416),
+                              fontWeight: FontWeight.bold,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () async {
+                                final url = Uri.parse('https://example.com/terms');
+                                if (await canLaunchUrl(url)) {
+                                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                                }
+                              },
+                          ),
+                          const TextSpan(text: "\nand "),
+                          TextSpan(
+                            text: "Privacy policy",
+                            style: const TextStyle(
+                              color: Color(0xFFE9B416),
+                              fontWeight: FontWeight.bold,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () async {
+                                final url = Uri.parse('https://example.com/privacy');
+                                if (await canLaunchUrl(url)) {
+                                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                                }
+                              },
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ), // Chiude Scaffold
+              Positioned(
+                top: 10,
+                right: 16,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/home');
+                  },
+                  child: const Text(
+                    "Skip",
+                    style: TextStyle(
+                      fontFamily: 'Open Sauce',
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ), // Chiude Scaffold
         ],
       ),
     );

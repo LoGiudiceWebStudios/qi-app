@@ -77,7 +77,7 @@ class _EventsPageState extends State<EventsPage> {
                 child: ElevatedButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.topBarMenu,
+                    backgroundColor: const Color(0xFF008F30),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -100,12 +100,20 @@ class _EventsPageState extends State<EventsPage> {
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          const CustomTopBar(
+          CustomTopBar(
             title: 'EVENTI',
-            backgroundColor: AppColors.topBarMenu,
+            backgroundColor: const Color(0xFF008F30),
             icon: Icons.calendar_month_outlined,
             showStar: false,
-            titleStyle: TextStyle(
+            leading: Builder(
+              builder: (context) {
+                return IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.of(context).pop(),
+                );
+              }
+            ),
+            titleStyle: const TextStyle(
               color: Colors.white,
               fontSize: 27,
               fontWeight: FontWeight.w800,

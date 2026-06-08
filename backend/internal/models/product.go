@@ -10,6 +10,7 @@ type Product struct {
 	Description string    `json:"description"`
 	Price       float64   `json:"price" gorm:"not null"`
 	ImageURL    string    `json:"image_url"`
+	Model3dUrl  string    `json:"model3d_url"`
 	IsAvailable bool      `json:"is_available" gorm:"default:true"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`

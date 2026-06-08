@@ -8,7 +8,8 @@ import 'dart:convert';
 
 class CategoryProductsPage extends StatefulWidget {
   final int categoryId;
-  CategoryProductsPage({required this.categoryId});
+  final String categoryName;
+  const CategoryProductsPage({super.key, required this.categoryId, required this.categoryName});
 
   @override
   _CategoryProductsPageState createState() => _CategoryProductsPageState();
@@ -48,7 +49,7 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
       body: Column(
         children: [
           CustomTopBar(
-            title: 'PRODOTTI',
+            title: widget.categoryName.toUpperCase(),
             backgroundColor: const Color(0xFF008F30),
             leading: IconButton(
               icon: const Icon(

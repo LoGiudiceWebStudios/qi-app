@@ -1,0 +1,276 @@
+﻿{{ template "layout_top" . }}
+
+<main class="flex-1 flex flex-col h-screen overflow-hidden">
+    <header class="h-16 bg-white border-b flex items-center justify-between px-6 shrink-0">
+        <h1 class="text-xl font-semibold text-gray-800">Genera Punti in Cassa</h1>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-6 bg-gray-50">
+        <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Emissione Punti Fedelta'</h2>
+            <p class="text-sm text-gray-500 mb-6">Inserisci l'importo della spesa per generare un codice QR usa-e-getta. Il cliente potra' scansionarlo tramite l'app per accreditare i punti.</p>
+            
+            <form id="generatePointsForm" class="space-y-4">
+                <div>
+                    <label for="importo" class="block text-sm font-medium text-gray-700">Importo Spesa (€)</label>
+                    <input type="number" id="importo" name="importo" step="0.01" required
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                </div>
+
+                <div>
+                    <label for="moltiplicatore" class="block text-sm font-medium text-gray-700">Moltiplicatore (Punti per €)</label>
+                    <input type="number" id="moltiplicatore" name="moltiplicatore" step="0.1" value="1.0" required
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                    <p class="mt-1 text-xs text-gray-500">Es. 1.0 significa 1 punto ogni euro speso. 2.0 significa 2 punti per euro.</p>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit"
+                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        Genera QR Code
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Risultato generazione QR Code -->
+            <div id="qrResultContainer" class="hidden mt-8 text-center border-t border-gray-200 pt-6">
+                <h3 class="text-md font-semibold text-gray-800 mb-2">Fai scansionare questo QR al cliente</h3>
+                <p id="puntiLabel" class="text-sm text-green-600 font-bold mb-4"></p>
+                
+                <div class="flex justify-center mb-4">
+                    <!-- Il contenitore dove verra' disegnato il QR code -->
+                    <div id="qrcode"></div>
+                </div>
+                
+                <p class="text-xs text-gray-400">Scadenza: 10 minuti dalla generazione. Valido per un solo utilizzo.</p>
+            </div>
+        </div>
+        <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-sm border border-gray-200 mt-8">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Riscatto Punti (Decurtazione)</h2>
+            <p class="text-sm text-gray-500 mb-6">Inquadra la Qi Card del cliente per visualizzare il saldo disponibile ed effettuare uno sconto scalandone i punti.</p>
+            
+            <div id="reader" style="width: 100%; max-width: 400px; margin: 0 auto;" class="mb-6"></div>
+
+            <div id="userScannedData" class="hidden space-y-4">
+                <div class="p-4 bg-green-50 border border-green-200 rounded-md">
+                    <p class="text-sm font-medium text-green-800">Utente riconosciuto:</p>
+                    <p class="text-lg font-bold text-gray-900" id="scannedUserName">-</p>
+                    <p class="text-sm text-gray-700">Saldo punti: <span class="font-bold text-xl" id="scannedUserPoints">0</span></p>
+                </div>
+
+                <form id="deductPointsForm" class="space-y-4">
+                    <input type="hidden" id="scannedUserId" name="user_id">
+                    <div>
+                        <label for="punti_da_scalare" class="block text-sm font-medium text-gray-700">Punti da decurtare</label>
+                        <input type="number" id="punti_da_scalare" name="points" step="1" min="1" required
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                        <p class="mt-1 text-xs text-gray-500">Iserisci la quantita' esatta di punti da togliere all'utente per applicare lo sconto in cassa.</p>
+                    </div>
+
+                    <div class="pt-4 flex gap-4">
+                        <button type="submit"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            Riscatta Punti
+                        </button>
+                        <button type="button" id="btnCancelScan"
+                            class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            Annulla
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <div id="btnStartScanContainer" class="flex justify-center mt-4">
+                <button type="button" id="btnStartScan"
+                    class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Avvia Fotocamera Scanner
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById('scannedUserId').value = '';
+        document.getElementById('punti_da_scalare').value = '';
+        document.getElementById('userScannedData').classList.add('hidden');
+        document.getElementById('btnStartScanContainer').classList.remove('hidden');
+    });
+
+    let html5QrcodeScanner = null;
+
+    document.getElementById('generatePointsForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const formData = new FormData(form);
+        
+        try {
+            const response = await fetch('/admin/points/generate', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                // Svuota eventuale QR code precedente
+                document.getElementById('qrcode').innerHTML = '';
+                
+                // Genera il nuovo QR code
+                // Codifichiamo il code JSON: { "action": "collect_points", "code": "QI-PTS-..." } 
+                // in modo che l'app sappia che operazione eseguire
+                const payload = JSON.stringify({
+                    action: "collect_points",
+                    code: data.code
+                });
+                
+                new QRCode(document.getElementById("qrcode"), {
+                    text: payload,
+                    width: 256,
+                    height: 256,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+                
+                document.getElementById('puntiLabel').textContent = "Punti Riconosciuti: " + data.points;
+                document.getElementById('qrResultContainer').classList.remove('hidden');
+                
+                // Opzionale: scroll al QR
+                document.getElementById('qrResultContainer').scrollIntoView({ behavior: 'smooth' });
+                
+                // Resetta l'importo per il prossimo cliente ma mantieni il moltiplicatore
+                document.getElementById('importo').value = '';
+            } else {
+                alert("Errore generazione QR: " + (data.error || "Errore sconosciuto"));
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Errore di connessione al server.");
+        }
+    });
+
+    // === GESTIONE SCANNER RISCATTO PUNTI ===
+    const readerDiv = document.getElementById('reader');
+    const userScannedData = document.getElementById('userScannedData');
+    const btnStartScanContainer = document.getElementById('btnStartScanContainer');
+    let html5QrCode = null;
+
+    // Gestione BFCache: Ricarica hard se si proviene dal back forward cache
+    window.addEventListener('pageshow', function (event) {
+        if (event.persisted) {
+            window.location.reload();
+        }
+    });
+
+    document.getElementById('btnStartScan').addEventListener('click', () => {
+        btnStartScanContainer.classList.add('hidden');
+        
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode("reader");
+        }
+
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        
+        html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+            .catch(err => {
+                alert("Errore nell'avvio della fotocamera: " + err);
+                btnStartScanContainer.classList.remove('hidden');
+            });
+    });
+
+    async function onScanSuccess(decodedText, decodedResult) {
+        // Ferma lo scanner una volta trovato il QR code per evitare letture multiple.
+        if (html5QrCode && html5QrCode.isScanning) {
+            await html5QrCode.stop().catch(console.error);
+        }
+        
+        console.log("Dati scansionati dal QR:", decodedText);
+        try {
+            const data = JSON.parse(decodedText);
+            
+            if (data.action === "user_info" && data.id !== undefined) {
+                
+                // NON ci fidiamo dei punti scritti sul QR, li richiediamo live al DB!
+                const res = await fetch('/admin/points/user/' + data.id);
+                const serverData = await res.json();
+                
+                if (res.ok && serverData.success) {
+                    document.getElementById('scannedUserName').textContent = serverData.name || "Sconosciuto";
+                    document.getElementById('scannedUserPoints').textContent = serverData.punti || 0;
+                    document.getElementById('scannedUserId').value = serverData.id;
+                    
+                    document.getElementById('punti_da_scalare').value = '';
+                    document.getElementById('punti_da_scalare').max = serverData.punti;
+
+                    userScannedData.classList.remove('hidden');
+                } else {
+                    alert("Utente non trovato nel database.");
+                    resetInterface();
+                }
+            } else {
+                alert("QR non valido per il riscatto punti.");
+                resetInterface();
+            }
+        } catch (e) {
+            console.warn("Non è un json valido", e);
+            alert("QR non valido o illeggibile.");
+            resetInterface();
+        }
+    }
+
+    function resetInterface() {
+        // Svuota e nascondi
+        userScannedData.classList.add('hidden');
+        document.getElementById('scannedUserId').value = '';
+        document.getElementById('punti_da_scalare').value = '';
+        
+        // Distruggi il div per evitare che Html5QrCode dia l'errore che è già in uso
+        if (html5QrCode) {
+            html5QrCode.clear();
+            html5QrCode = null;
+        }
+        document.getElementById('reader').innerHTML = '';
+        
+        btnStartScanContainer.classList.remove('hidden');
+    }
+
+    document.getElementById('btnCancelScan').addEventListener('click', () => {
+        resetInterface();
+    });
+
+    document.getElementById('deductPointsForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const userId = parseInt(document.getElementById('scannedUserId').value, 10);
+        const points = parseInt(document.getElementById('punti_da_scalare').value, 10);
+
+        try {
+            const response = await fetch('/admin/points/deduct', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ user_id: userId, points: points })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                alert(`Successo! Sconto applicato. Nuovi punti utente: ${data.nuovi_punti}`);
+                resetInterface();
+            } else {
+                alert("Errore decurtazione: " + (data.error || "Errore sconosciuto"));
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Errore di connessione al server.");
+        }
+    });
+</script>
+
+{{ template "layout_bottom" . }}

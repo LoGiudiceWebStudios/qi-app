@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/pages/home_page.dart';
+import 'core/services/notification_service.dart';
 import 'presentation/pages/splash_screen.dart';
 import 'presentation/pages/login_screen.dart';
 
@@ -12,6 +13,7 @@ void main() async {
   // Inizializza Firebase
   try {
     await Firebase.initializeApp();
+    await NotificationService.initialize();
   } catch (e) {
     debugPrint("Errore inizializzazione Firebase: $e");
   }

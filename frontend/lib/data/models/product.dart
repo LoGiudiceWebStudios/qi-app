@@ -6,6 +6,7 @@ class Product {
   final String description;
   final double price;
   final String imageUrl;
+  final String? model3dUrl;
   final bool isAvailable;
 
   Product({
@@ -16,6 +17,7 @@ class Product {
     required this.description,
     required this.price,
     required this.imageUrl,
+    this.model3dUrl,
     required this.isAvailable,
   });
 
@@ -28,6 +30,7 @@ class Product {
       description: json['description'] ?? '',
       price: json['price']?.toDouble() ?? 0.0,
       imageUrl: json['image_url'] ?? '',
+      model3dUrl: json['model3d_url'],
       isAvailable: json['is_available'] ?? true,
     );
   }

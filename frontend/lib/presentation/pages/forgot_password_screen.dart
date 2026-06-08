@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../data/services/auth_api_service.dart';
 import 'verification_code_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -104,17 +105,30 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       width: double.infinity,
                       height: 60,
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const VerificationCodeScreen(),
-                            ),
-                          );
+                        onPressed: _isLoading ? null : () async {
+                          final email = _emailController.text.trim();
+                          if (email.isEmpty) return;
+                          
+                          setState(() => _isLoading = true);
+                          bool sent = await AuthApiService.forgotPassword(email: email);
+                          setState(() => _isLoading = false);
+
+                          if (sent && mounted) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VerificationCodeScreen(email: email),
+                              ),
+                            );
+                          } else if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Errore invio email')),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(
-                            0xFFF59E0B,
+                            0xFFE9B416,
                           ), // Arancione come nel mockup
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(11.0),

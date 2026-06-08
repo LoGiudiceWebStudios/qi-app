@@ -106,6 +106,16 @@ func (h *MenuHandler) CreateProduct(c *gin.Context) {
 	price, _ := strconv.ParseFloat(priceStr, 64)
 
 	var imageURL string
+	var modelURL string
+	file3d, err3d := c.FormFile("modello_3d")
+	if err3d == nil {
+		os.MkdirAll("uploads/models3d", os.ModePerm)
+		filename3d := fmt.Sprintf("%d_%s", time.Now().Unix(), file3d.Filename)
+		filepath3d := fmt.Sprintf("uploads/models3d/%s", filename3d)
+		if err := c.SaveUploadedFile(file3d, filepath3d); err == nil {
+			modelURL = "/" + filepath3d
+		}
+	}
 	file, err := c.FormFile("immagine")
 	if err == nil {
 		os.MkdirAll("uploads/products", os.ModePerm)
@@ -123,11 +133,30 @@ func (h *MenuHandler) CreateProduct(c *gin.Context) {
 		Description: desc,
 		Price:       price,
 		ImageURL:    imageURL,
+		Model3dUrl:  modelURL,
 	}
 
 	if err := database.DB.Create(&product).Error; err != nil {
 		log.Println("Errore salvataggio prodotto:", err)
 	}
 
+	c.Redirect(http.StatusSeeOther, "/admin/menu")
+}
+
+func (h *MenuHandler) DeleteCategory(c *gin.Context) {
+	id := c.Param("id")
+	if err := database.DB.Delete(&models.Category{}, id).Error; err != nil {
+		c.String(http.StatusInternalServerError, "Errore l'eliminazione")
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/admin/menu")
+}
+
+func (h *MenuHandler) DeleteProduct(c *gin.Context) {
+	id := c.Param("id")
+	if err := database.DB.Delete(&models.Product{}, id).Error; err != nil {
+		c.String(http.StatusInternalServerError, "Errore l'eliminazione")
+		return
+	}
 	c.Redirect(http.StatusSeeOther, "/admin/menu")
 }

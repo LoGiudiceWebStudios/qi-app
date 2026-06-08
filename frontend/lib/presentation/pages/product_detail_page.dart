@@ -1,7 +1,10 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../data/models/product.dart';
 import '../../data/services/api_service.dart';
 import '../widgets/custom_top_bar.dart';
+import 'model_3d_page.dart';
 
 class ProductDetailPage extends StatelessWidget {
   final Product product;
@@ -15,7 +18,7 @@ class ProductDetailPage extends StatelessWidget {
       body: Column(
         children: [
           CustomTopBar(
-            title: 'PRODOTTO',
+            title: product.name.toUpperCase(),
             backgroundColor: const Color(0xFF008F30),
             leading: IconButton(
               icon: const Icon(
@@ -73,10 +76,31 @@ class ProductDetailPage extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
-                  // Pulsante (Stile Pillola come in foto)
+                  // Pulsante per aprire la vista 3D
                   InkWell(
-                    onTap: () {
-                      // Azione pulsante es. Aggiungi al carrello
+                    onTap: () async {
+                      final modelUrl = product.model3dUrl != null && product.model3dUrl!.isNotEmpty
+                          ? Uri.encodeFull('${ApiService.serverUrl}${product.model3dUrl}')
+                          : '';
+
+                      if (modelUrl.isNotEmpty && Platform.isAndroid) {
+                        final arUrl = Uri.parse(
+                            'https://arvr.google.com/scene-viewer/1.0?file=$modelUrl&mode=ar_only');
+                        if (await canLaunchUrl(arUrl)) {
+                          await launchUrl(arUrl, mode: LaunchMode.externalApplication);
+                          return;
+                        }
+                      }
+
+                      // Fallback: iOS o se Scene Viewer non è disponibile (mostriamo la pagina nel viewer classico)
+                      if (context.mounted) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => Model3DPage(product: product),
+                          ),
+                        );
+                      }
                     },
                     borderRadius: BorderRadius.circular(50),
                     child: Container(

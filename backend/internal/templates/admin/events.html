@@ -17,10 +17,7 @@
                 <th class="py-3 px-6 border-b">ID</th>
                 <th class="py-3 px-6 border-b">Titolo</th>
                 <th class="py-3 px-6 border-b">Data e Ora</th>
-                <th class="py-3 px-6 border-b">Luogo</th>
-            </tr>
-        </thead>
-        <tbody class="text-sm">
+                <th class="py-3 px-6 border-b">Luogo</th><th class="py-3 px-6 border-b">Azioni</th></tr></thead><tbody class="text-sm">
             {{ range .Events }}
             <tr class="border-b transition duration-200 hover:bg-gray-50">
                 <td class="py-3 px-6">
@@ -33,9 +30,7 @@
                 <td class="py-3 px-6">{{ .ID }}</td>
                 <td class="py-3 px-6 font-semibold">{{ .Titolo }}</td>
                 <td class="py-3 px-6">{{ .DataEvento.Format "02/01/2006" }} {{ .Ora }}</td>
-                <td class="py-3 px-6">{{ .Luogo }}</td>
-            </tr>
-            {{ else }}
+                <td class="py-3 px-6">{{ .Luogo }}</td><td class="py-3 px-6"><form action="/admin/events/{{ .ID }}/delete" method="POST" onsubmit="return confirm('Sei sicuro di voler eliminare questo evento?');"><button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded text-xs">Elimina</button></form></td></tr>{{ else }}
             <tr>
                 <td colspan="5" class="py-4 text-center text-gray-500">Nessun evento disponibile</td>
             </tr>
@@ -105,3 +100,4 @@ function toggleModal(modalID) {
 </script>
 
 {{ template "layout_bottom" . }}
+

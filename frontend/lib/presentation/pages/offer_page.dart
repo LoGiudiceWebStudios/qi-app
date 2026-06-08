@@ -109,7 +109,7 @@ class _OfferPageState extends State<OfferPage> {
         children: [
           CustomTopBar(
             title: 'OFFERTE',
-            backgroundColor: AppColors.topBarOffers,
+            backgroundColor: const Color(0xFFE9B416),
             icon: Icons.local_activity_outlined,
             showStar: false,
             titleStyle: const TextStyle(
@@ -403,12 +403,12 @@ class _GenerateQRWidgetState extends State<_GenerateQRWidget> {
         children: [
           const Text(
             'Codice Offerta',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+            style: TextStyle(color: Color(0xFFE9B416), fontSize: 20, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           Text(
             widget.offer.title,
-            style: const TextStyle(color: AppColors.textSecondary),
+            style: const TextStyle(color: Color(0xFF6B7280)),
           ),
           const SizedBox(height: 16),
           FutureBuilder<Map<String, dynamic>>(
@@ -471,6 +471,7 @@ class _GenerateQRWidgetState extends State<_GenerateQRWidget> {
                           letterSpacing: 1.2,
                           fontWeight: FontWeight.w800,
                           fontSize: 18,
+                          color: Color(0xFFE9B416),
                         ),
                       ),
                     ),

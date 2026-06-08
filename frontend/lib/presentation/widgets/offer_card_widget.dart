@@ -111,7 +111,7 @@ class OfferCardWidget extends StatelessWidget {
                               fontFamily: 'Open Sauce',
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: Color(0xFFFFA000),
+                              color: Color(0xFFE9B416),
                             ),
                           ),
                         ),

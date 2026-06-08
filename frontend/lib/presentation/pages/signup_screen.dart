@@ -159,13 +159,13 @@ class _SignupScreenState extends State<SignupScreen> {
                       controller: _emailController,
                     ),
                     const SizedBox(height: 16),
-
+          /*
                     _buildLabel("Telefono"),
                     _buildTextField(
                       hint: "Inserisci il tuo numero di telefono",
                       controller: _phoneController,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 16),*/
 
                     _buildLabel("Password"),
                     _buildTextField(
@@ -237,7 +237,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _handleSignUp,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF59E0B),
+                          backgroundColor: const Color(0xFFE9B416),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(11.0),
                           ),

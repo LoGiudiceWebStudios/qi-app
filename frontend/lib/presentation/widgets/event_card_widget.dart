@@ -98,7 +98,7 @@ class EventCardWidget extends StatelessWidget {
                       fontFamily: 'Open Sauce',
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFFFFA000), // Giallo/arancio per farsi notare
+                      color: Color(0xFFE9B416), // Giallo/arancio per farsi notare
                     ),
                   ),
                 ],

@@ -1,8 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../data/services/auth_api_service.dart';
+import 'reset_password_screen.dart';
 
 class VerificationCodeScreen extends StatefulWidget {
-  const VerificationCodeScreen({super.key});
+  final String email;
+  const VerificationCodeScreen({super.key, required this.email});
 
   @override
   State<VerificationCodeScreen> createState() => _VerificationCodeScreenState();
@@ -113,11 +116,29 @@ class _VerificationCodeScreenState extends State<VerificationCodeScreen> {
                         onPressed:
                             _isLoading
                                 ? null
-                                : () {
-                                  // TODO: Verify code logic
+                                : () async {
+                                  final code = _controllers.map((c) => c.text.trim()).join();
+                                  if (code.length < 4) return;
+                                  
+                                  setState(() => _isLoading = true);
+                                  try {
+                                    bool valid = await AuthApiService.verifyResetCode(email: widget.email, code: code);
+                                    if (valid && mounted) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ResetPasswordScreen(email: widget.email, code: code),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+                                  } finally {
+                                    if (mounted) setState(() => _isLoading = false);
+                                  }
                                 },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF59E0B),
+                          backgroundColor: const Color(0xFFE9B416),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(11.0),
                           ),

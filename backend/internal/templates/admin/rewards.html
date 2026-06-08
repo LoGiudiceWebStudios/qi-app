@@ -1,0 +1,49 @@
+{{ template "layout_top" . }}
+
+<div class="mb-6 flex items-center justify-between">
+    <h2 class="text-2xl font-bold">Elenco Premi</h2>
+    <a href="/admin/rewards/new" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow">
+        + Nuovo Premio
+    </a>
+</div>
+
+<div class="bg-white rounded-lg shadow overflow-hidden">
+    <table class="min-w-full leading-normal">
+        <thead>
+            <tr>
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Immagine</th>
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Titolo</th>
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Descrizione</th>
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Punti</th>
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range .Rewards }}
+            <tr>
+                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                    {{ if .ImmagineURL }}
+                    <img src="{{ .ImmagineURL }}" class="w-12 h-12 rounded object-cover" />
+                    {{ else }}
+                    <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-500">No img</div>
+                    {{ end }}
+                </td>
+                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm font-semibold">{{ .Titolo }}</td>
+                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm whitespace-pre-line">{{ .Descrizione }}</td>
+                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-green-600 font-bold">{{ .PuntiRichiesti }}</td>
+                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right">
+                    <form action="/admin/rewards/{{ .ID }}/delete" method="POST" onsubmit="return confirm('Sei sicuro di voler eliminare questo premio?');">
+                        <button type="submit" class="text-red-500 hover:text-red-700 font-semibold px-2 py-1 border border-red-500 rounded hover:bg-red-50 transition">Elimina</button>
+                    </form>
+                </td>
+            </tr>
+            {{ else }}
+            <tr>
+                <td colspan="5" class="px-5 py-5 bg-white text-sm text-center text-gray-500">Nessun premio trovato. Clicca su "+ Nuovo Premio" per crearne uno.</td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+</div>
+
+{{ template "layout_bottom" . }}
