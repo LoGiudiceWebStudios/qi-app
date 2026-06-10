@@ -69,9 +69,6 @@ func GenerateOfferCode(c *gin.Context) {
 		return
 	}
 
-	// Calculate expiration (+20 minutes)
-	expiresAt := time.Now().Add(20 * time.Minute)
-
 	// Calcola l'ID in formato corretto sapendo che da JSON/JWT potrebbe arrivare come float64
 	var uid uint
 	switch v := userID.(type) {
@@ -83,6 +80,27 @@ func GenerateOfferCode(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse("Errore conversione ID", "id_error"))
 		return
 	}
+
+	// Controlla se l'utente ha già generato un codice per questa offerta
+	var existingCode models.OfferCode
+	if err := database.DB.Where("offer_id = ? AND user_id = ?", offer.ID, uid).Order("created_at desc").First(&existingCode).Error; err == nil {
+		if existingCode.IsUsed {
+			c.JSON(http.StatusBadRequest, models.ErrorResponse("Hai già usufruito di questa offerta.", "already_used"))
+			return
+		}
+		if time.Now().Before(existingCode.ExpiresAt) {
+			// Il codice non è ancora scaduto, restituisci quello esistente
+			c.JSON(http.StatusOK, models.SuccessResponse("Codice recuperato con successo", gin.H{
+				"code":       existingCode.Code,
+				"expires_at": existingCode.ExpiresAt.Format(time.RFC3339),
+			}))
+			return
+		}
+		// Se è scaduto e non usato, di default prosegue per generarne uno nuovo.
+	}
+
+	// Calculate expiration (+20 minutes)
+	expiresAt := time.Now().Add(20 * time.Minute)
 
 	// Create a simple random code like QI-OFF-XXYYZZ
 	code := fmt.Sprintf("QI-OFF-%d-%d-%d", offer.ID, time.Now().Unix()%100000, uid)
