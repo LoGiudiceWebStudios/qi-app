@@ -59,6 +59,7 @@ func Connect() {
 		&models.PointsTransaction{},
 		&models.Reward{},
 		&models.ScheduledNotification{},
+		&models.PendingRegistration{},
 	)
 	if err != nil {
 		log.Fatalf("❌ Errore durante l'automigrazione: %v", err)

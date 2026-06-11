@@ -81,6 +81,18 @@ type ScheduledNotification struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
+type PendingRegistration struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	Email     string    `gorm:"size:255;uniqueIndex;not null" json:"email"`
+	Nome      string    `gorm:"size:100;not null" json:"nome"`
+	Cognome   string    `gorm:"size:100" json:"cognome"`
+	Telefono  string    `gorm:"size:50" json:"telefono"`
+	Password  string    `gorm:"size:255;not null" json:"password"`
+	Code      string    `gorm:"size:4;not null" json:"code"`
+	ExpiresAt time.Time `json:"expires_at"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type Reward struct {
 	ID             uint           `gorm:"primaryKey" json:"id"`
 	Titolo         string         `gorm:"size:200;not null" json:"titolo"`

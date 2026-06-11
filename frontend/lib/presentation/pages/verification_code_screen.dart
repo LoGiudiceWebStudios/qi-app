@@ -5,7 +5,8 @@ import 'reset_password_screen.dart';
 
 class VerificationCodeScreen extends StatefulWidget {
   final String email;
-  const VerificationCodeScreen({super.key, required this.email});
+  final bool isSignUp;
+  const VerificationCodeScreen({super.key, required this.email, this.isSignUp = false});
 
   @override
   State<VerificationCodeScreen> createState() => _VerificationCodeScreenState();
@@ -122,14 +123,23 @@ class _VerificationCodeScreenState extends State<VerificationCodeScreen> {
                                   
                                   setState(() => _isLoading = true);
                                   try {
-                                    bool valid = await AuthApiService.verifyResetCode(email: widget.email, code: code);
-                                    if (valid && mounted) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => ResetPasswordScreen(email: widget.email, code: code),
-                                        ),
-                                      );
+                                    if (widget.isSignUp) {
+                                      // Logica di verifica Signup
+                                      bool valid = await AuthApiService.verifySignUp(email: widget.email, code: code);
+                                      if (valid && mounted) {
+                                        Navigator.pushReplacementNamed(context, '/home');
+                                      }
+                                    } else {
+                                      // Logica di verify password reset
+                                      bool valid = await AuthApiService.verifyResetCode(email: widget.email, code: code);
+                                      if (valid && mounted) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => ResetPasswordScreen(email: widget.email, code: code),
+                                          ),
+                                        );
+                                      }
                                     }
                                   } catch (e) {
                                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));

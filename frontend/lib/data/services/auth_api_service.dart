@@ -14,8 +14,8 @@ class AuthApiService {
     }
   }
   
-  /// Registrazione - Crea un account ed effettua l'accesso automatico
-  static Future<bool> signUp({
+  /// Richiede la Registrazione - Ritorna true se il PIN è stato inviato via mail
+  static Future<bool> requestSignUp({
     required String nome,
     required String email,
     required String password,
@@ -23,7 +23,6 @@ class AuthApiService {
     String? telefono,
   }) async {
     try {
-      String? fcmToken = await _getFcmToken();
       final response = await ApiService.dio.post(
         '/auth/signup',
         data: {
@@ -32,27 +31,49 @@ class AuthApiService {
           'password': password,
           if (cognome != null) 'cognome': cognome,
           if (telefono != null) 'telefono': telefono,
-          if (fcmToken != null) 'fcm_token': fcmToken,
         },
       );
 
-      // Status 201 Created previsto dal tuo backend
-      if (response.statusCode == 201 && response.data['success'] == true) {
-        final token = response.data['token'];
-        
-        if (token != null) {
-          // Archiviazione sicura nel Keystore/Keychain
-          await SecureStorageService.saveToken(token);
-          return true;
-        }
-      }
-      return false;
-      
+      return response.statusCode == 200 && response.data['success'] == true;
     } on DioException catch (e) {
       if (e.response != null && e.response?.data != null) {
         throw Exception(e.response?.data['message'] ?? 'Errore dal server durante la registrazione');
       } else {
         throw Exception('Nessuna risposta dal server. Verifica la connessione.');
+      }
+    }
+  }
+
+  /// Verifica il PIN - Completa la registrazione e salva il JWT
+  static Future<bool> verifySignUp({
+    required String email,
+    required String code,
+  }) async {
+    try {
+      String? fcmToken = await _getFcmToken();
+      final response = await ApiService.dio.post(
+        '/auth/verify-signup',
+        data: {
+          'email': email,
+          'code': code,
+          if (fcmToken != null) 'fcm_token': fcmToken,
+        },
+      );
+
+      if (response.statusCode == 201 && response.data['success'] == true) {
+        final token = response.data['token'];
+        
+        if (token != null) {
+          await SecureStorageService.saveToken(token);
+          return true;
+        }
+      }
+      return false;
+    } on DioException catch (e) {
+      if (e.response != null && e.response?.data != null) {
+        throw Exception(e.response?.data['message'] ?? 'Codice errato o scaduto');
+      } else {
+        throw Exception('Errore di connessione al server');
       }
     }
   }

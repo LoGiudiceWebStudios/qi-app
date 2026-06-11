@@ -100,7 +100,7 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 		IsOpen:       isOpen,
 		OpeningTime:  openingTime.Value,
 		ClosingTime:  closingTime.Value,
-		LocationName: "Via Luigi Enaudi",
+		LocationName: "Via Luigi Einaudi, 18",
 		NextEvent:    nextEventTitle,
 		Events:       homeEvents,
 		Offers:       homeOffers,

@@ -175,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         // LOGO
                         Image.asset(
-                          'assets/icons/Logo.png',
+                          'assets/icons/Logo_2.jpg',
                           width: 212,
                           height: 212,
                           fit: BoxFit.contain,
@@ -386,6 +386,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: const TextStyle(
                               color: Color(0xFFE9B416),
                               fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () async {
@@ -401,6 +402,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: const TextStyle(
                               color: Color(0xFFE9B416),
                               fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () async {

@@ -43,8 +43,8 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	})
 }
 
-// SignUp registra un nuovo utente
-func (h *AuthHandler) SignUp(c *gin.Context) {
+// RequestSignUp avvia il processo inviando il codice
+func (h *AuthHandler) RequestSignUp(c *gin.Context) {
 	var req models.RegisterRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -52,9 +52,34 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 		return
 	}
 
-	token, user, err := h.authService.SignUp(req)
+	err := h.authService.RequestSignUp(req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Codice di verifica inviato all'email",
+	})
+}
+
+// VerifySignUp controlla il codice e crea l'utente definitivo
+func (h *AuthHandler) VerifySignUp(c *gin.Context) {
+	var req struct {
+		Email    string `json:"email" binding:"required,email"`
+		Code     string `json:"code" binding:"required"`
+		FCMToken string `json:"fcm_token,omitempty"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Dati non validi", "error": err.Error()})
+		return
+	}
+
+	token, user, err := h.authService.VerifySignUp(req.Email, req.Code, req.FCMToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": err.Error()})
 		return
 	}
 
@@ -62,7 +87,7 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 		"success": true,
 		"token":   token,
 		"user":    user,
-		"message": "Registrazione completata",
+		"message": "Registrazione completata con successo",
 	})
 }
 
@@ -118,12 +143,12 @@ func (h *AuthHandler) UpdateFCMToken(c *gin.Context) {
 }
 
 func (h *AuthHandler) GetProfile(c *gin.Context) {
-userID, exists := c.Get("user_id")
-if !exists {
-c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-return
-}
-var uid uint
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	var uid uint
 	switch v := userID.(type) {
 	case float64:
 		uid = uint(v)
@@ -131,30 +156,30 @@ var uid uint
 		uid = v
 	}
 	user, err := h.authService.GetProfile(uid)
-if err != nil {
-c.JSON(http.StatusInternalServerError, gin.H{"error": "Errore caricamento profilo"})
-return
-}
-c.JSON(http.StatusOK, user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Errore caricamento profilo"})
+		return
+	}
+	c.JSON(http.StatusOK, user)
 }
 
 func (h *AuthHandler) UpdateProfile(c *gin.Context) {
-userID, exists := c.Get("user_id")
-if !exists {
-c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-return
-}
-var req struct {
-Nome     string `json:"nome"`
-Cognome  string `json:"cognome"`
-Email    string `json:"email"`
-Password string `json:"password"`
-}
-if err := c.ShouldBindJSON(&req); err != nil {
-c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-return
-}
-var uid uint
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	var req struct {
+		Nome     string `json:"nome"`
+		Cognome  string `json:"cognome"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	var uid uint
 	switch v := userID.(type) {
 	case float64:
 		uid = uint(v)
@@ -162,8 +187,8 @@ var uid uint
 		uid = v
 	}
 	if err := h.authService.UpdateProfile(uid, req.Nome, req.Cognome, req.Email, req.Password); err != nil {
-c.JSON(http.StatusInternalServerError, gin.H{"error": "Errore aggiornamento profilo"})
-return
-}
-c.JSON(http.StatusOK, gin.H{"message": "Profilo aggiornato con successo"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Errore aggiornamento profilo"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Profilo aggiornato con successo"})
 }

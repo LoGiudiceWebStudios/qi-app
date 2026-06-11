@@ -13,6 +13,8 @@ import 'scan_page.dart';
 import 'menu_page.dart';
 import 'profile_page.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../data/services/api_service.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -414,7 +416,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                         Text(
                           homeData.isOpen
                               ? 'Fino alle ${homeData.closingTime}'
-                                : 'Apre alle', // TODO add opening_time from backend if needed
+                              : 'Apre alle ${homeData.openingTime}',
                           style: const TextStyle(
                             fontFamily: 'Open Sauce',
                             color: Colors.black54,
@@ -432,28 +434,40 @@ class _HomePageState extends ConsumerState<HomePage> {
                       children: [
                         // Left
                         Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Dove Siamo',
-                                style: TextStyle(
-                                  fontFamily: 'Open Sauce',
-                                  color: greenColor,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                ),
+                          child: GestureDetector(
+                            onTap: () async {
+                              final query = Uri.encodeComponent('Via Luigi Einaudi, 18, 95024 Acireale CT');
+                              final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+                              if (await canLaunchUrl(url)) {
+                                await launchUrl(url, mode: LaunchMode.externalApplication);
+                              }
+                            },
+                            child: Container(
+                              color: Colors.transparent, // Necessario per ricevere il tap su tutta l'area
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Dove Siamo',
+                                    style: TextStyle(
+                                      fontFamily: 'Open Sauce',
+                                      color: greenColor,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    'Via Luigi Einaudi, 18',
+                                    style: TextStyle(
+                                      fontFamily: 'Open Sauce',
+                                      color: Colors.black54,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 2),
-                              const Text(
-                                'Via Luigi Enaudi',
-                                style: TextStyle(
-                                  fontFamily: 'Open Sauce',
-                                  color: Colors.black54,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
 

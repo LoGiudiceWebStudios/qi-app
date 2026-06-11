@@ -51,7 +51,8 @@ func main() {
 	api := router.Group("/api/v1")
 	{
 		api.POST("/auth/login", authHandler.Login)
-		api.POST("/auth/signup", authHandler.SignUp)
+		api.POST("/auth/signup", authHandler.RequestSignUp)
+		api.POST("/auth/verify-signup", authHandler.VerifySignUp)
 		api.POST("/auth/social", authHandler.SocialLogin)
 		api.POST("/auth/forgot-password", handlers.ForgotPassword)
 		api.POST("/auth/verify-reset-code", handlers.VerifyResetCode)

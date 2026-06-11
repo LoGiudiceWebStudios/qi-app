@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../data/services/auth_api_service.dart';
-
+import '../../data/services/auth_api_service.dart';import 'verification_code_screen.dart';
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -52,7 +51,7 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final success = await AuthApiService.signUp(
+      final success = await AuthApiService.requestSignUp(
         nome: nome,
         email: email,
         password: pass,
@@ -60,8 +59,16 @@ class _SignupScreenState extends State<SignupScreen> {
       );
 
       if (success && mounted) {
-        // Registrazione ok, navighiamo alla home
-        Navigator.pushReplacementNamed(context, '/home'); // o la tua rotta principale
+        // PIN inviato, andiamo alla schermata di verifica OTP
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VerificationCodeScreen(
+              email: email,
+              isSignUp: true,
+            ),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -159,13 +166,13 @@ class _SignupScreenState extends State<SignupScreen> {
                       controller: _emailController,
                     ),
                     const SizedBox(height: 16),
-          /*
+
                     _buildLabel("Telefono"),
                     _buildTextField(
                       hint: "Inserisci il tuo numero di telefono",
                       controller: _phoneController,
                     ),
-                    const SizedBox(height: 16),*/
+                    const SizedBox(height: 16),
 
                     _buildLabel("Password"),
                     _buildTextField(

@@ -3,8 +3,13 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
+	"math/rand"
 	"os"
+	"strconv"
 	"time"
+
+	"gopkg.in/gomail.v2"
 
 	"qi-backend/internal/database"
 	"qi-backend/internal/models"
@@ -65,33 +70,99 @@ func (s *AuthService) Login(req models.LoginRequest) (string, *models.User, erro
 	return token, &user, nil
 }
 
-func (s *AuthService) SignUp(req models.RegisterRequest) (string, *models.User, error) {
+func sendSignupEmail(to, code string) {
+	host := os.Getenv("SMTP_HOST")
+	portStr := os.Getenv("SMTP_PORT")
+	user := os.Getenv("SMTP_USER")
+	pass := os.Getenv("SMTP_PASSWORD")
+
+	if host == "" || pass == "" {
+		fmt.Println("SMTP credenziali non configurate per signup")
+		return
+	}
+
+	port, _ := strconv.Atoi(portStr)
+
+	m := gomail.NewMessage()
+	m.SetHeader("From", user)
+	m.SetHeader("To", to)
+	m.SetHeader("Subject", "Codice di Verifica - Qi App")
+	m.SetBody("text/plain", fmt.Sprintf("Benvenuto in Qi App!\n\nIl tuo codice di verifica per completare la registrazione è: %s\n\nAttenzione: il codice scade tra 15 minuti.", code))
+
+	d := gomail.NewDialer(host, port, user, pass)
+	if err := d.DialAndSend(m); err != nil {
+		fmt.Println("Errore nell'invio dell'email: ", err)
+	}
+}
+
+func (s *AuthService) RequestSignUp(req models.RegisterRequest) error {
 	var existing models.User
 
 	if err := database.DB.Where("email = ?", req.Email).First(&existing).Error; err == nil {
-		return "", nil, errors.New("questa email risulta gia in uso")
+		return errors.New("questa email risulta gia in uso")
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return "", nil, err
+		return err
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return "", nil, errors.New("errore durante lhashing della password")
+		return errors.New("errore durante lhashing della password")
+	}
+
+	var pending models.PendingRegistration
+	if err := database.DB.Where("email = ?", req.Email).First(&pending).Error; err == nil {
+		database.DB.Delete(&pending)
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	code := fmt.Sprintf("%04d", rand.Intn(10000))
+	expiresAt := time.Now().Add(15 * time.Minute)
+
+	newPending := models.PendingRegistration{
+		Nome:      req.Nome,
+		Cognome:   req.Cognome,
+		Telefono:  req.Telefono,
+		Email:     req.Email,
+		Password:  string(hashedPassword),
+		Code:      code,
+		ExpiresAt: expiresAt,
+	}
+
+	if err := database.DB.Create(&newPending).Error; err != nil {
+		return errors.New("errore durante la creazione della richiesta di registrazione")
+	}
+
+	go sendSignupEmail(req.Email, code)
+	return nil
+}
+
+func (s *AuthService) VerifySignUp(email string, code string, fcmToken string) (string, *models.User, error) {
+	var pending models.PendingRegistration
+
+	if err := database.DB.Where("email = ? AND code = ?", email, code).First(&pending).Error; err != nil {
+		return "", nil, errors.New("codice errato o scaduto")
+	}
+
+	if time.Now().After(pending.ExpiresAt) {
+		return "", nil, errors.New("codice errato o scaduto")
 	}
 
 	newUser := models.User{
-		Nome:     req.Nome,
-		Cognome:  req.Cognome,
-		Telefono: req.Telefono,
-		Email:    req.Email,
-		Password: string(hashedPassword),
+		Nome:     pending.Nome,
+		Cognome:  pending.Cognome,
+		Telefono: pending.Telefono,
+		Email:    pending.Email,
+		Password: pending.Password,
 		Provider: "email",
-		FCMToken: req.FCMToken,
+		FCMToken: fcmToken,
 	}
 
 	if err := database.DB.Create(&newUser).Error; err != nil {
 		return "", nil, errors.New("errore durante la creazione dell'utente")
 	}
+
+	// Delete pending registration after success
+	database.DB.Delete(&pending)
 
 	token, err := s.GenerateJWT(newUser.ID)
 	if err != nil {
