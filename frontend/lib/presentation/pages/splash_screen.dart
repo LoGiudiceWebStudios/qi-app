@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'update_screen.dart';
+import '../../data/services/secure_storage_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -21,6 +22,7 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _checkVersionAndNavigate() async {
     bool needsUpdate = false;
     String storeUrl = '';
+    String nextRoute = '/login';
 
     try {
       final remoteConfig = FirebaseRemoteConfig.instance;
@@ -32,7 +34,7 @@ class _SplashScreenState extends State<SplashScreen> {
       // Defaults
       await remoteConfig.setDefaults(const {
         'force_update_version': '1.0.0',
-        'store_url_android': 'https://play.google.com/store/apps/details?id=com.qiapp',
+        'store_url_android': 'https://play.google.com/store/apps/details?id=com.qifoodfocus.app',
         'store_url_ios': 'https://apps.apple.com/app/id123456789',
       });
 
@@ -69,7 +71,14 @@ class _SplashScreenState extends State<SplashScreen> {
         MaterialPageRoute(builder: (context) => UpdateScreen(storeUrl: storeUrl)),
       );
     } else {
-      Navigator.pushReplacementNamed(context, '/login');
+      final token = await SecureStorageService.getToken();
+      if (token != null && token.isNotEmpty) {
+        // Se il token esiste, manteniamo la sessione locale ed entriamo in home.
+        // Evitiamo di invalidarlo in splash per errori temporanei di rete/server.
+        nextRoute = '/home';
+      }
+
+      Navigator.pushReplacementNamed(context, nextRoute);
     }
   }
 

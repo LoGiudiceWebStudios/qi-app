@@ -20,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-  serverClientId: 'INCOLLA_QUI_IL_TUO_WEB_CLIENT_ID.apps.googleusercontent.com',
+  serverClientId: '675445824557-t3kmlhpl7in36a9i83qbrhromiu976sv.apps.googleusercontent.com',
 );
   bool _obscurePassword = true;
   bool _savePassword = false;
@@ -390,7 +390,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () async {
-                                final url = Uri.parse('https://example.com/terms');
+                                final url = Uri.parse('https://sites.google.com/view/qiterminiecondizioni/home-page');
                                 if (await canLaunchUrl(url)) {
                                   await launchUrl(url, mode: LaunchMode.externalApplication);
                                 }
@@ -406,7 +406,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () async {
-                                final url = Uri.parse('https://example.com/privacy');
+                                final url = Uri.parse('https://sites.google.com/view/qiprivacypolicy/home-page');
                                 if (await canLaunchUrl(url)) {
                                   await launchUrl(url, mode: LaunchMode.externalApplication);
                                 }

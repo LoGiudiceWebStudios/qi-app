@@ -30,7 +30,7 @@ func NewAuthService() *AuthService {
 func (s *AuthService) GenerateJWT(userID uint) (string, error) {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		secret = "my_super_secret_key_change_me" // Fallback allineato con il middleware
+		secret = "d8f9e0a2b4c6d8e0f1a3b5c7d9e1f3a5b7c9d1e3f5a7b9c1d3e5f7a9b1c3d5e7" // Fallback allineato con il middleware
 	}
 
 	claims := jwt.MapClaims{
@@ -261,4 +261,19 @@ func (s *AuthService) UpdateProfile(userID uint, nome, cognome, email, password 
 		user.Password = string(hashed)
 	}
 	return database.DB.Save(&user).Error
+}
+
+func (s *AuthService) DeleteAccount(userID uint) error {
+	var user models.User
+	if err := database.DB.First(&user, userID).Error; err != nil {
+		return err
+	}
+
+	// Pulizia token push prima della cancellazione account.
+	user.FCMToken = ""
+	if err := database.DB.Save(&user).Error; err != nil {
+		return err
+	}
+
+	return database.DB.Delete(&user).Error
 }

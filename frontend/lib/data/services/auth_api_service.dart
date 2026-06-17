@@ -213,6 +213,32 @@ class AuthApiService {
     }
   }
 
+  static Future<void> deleteAccount() async {
+    final token = await SecureStorageService.getToken();
+    if (token == null) throw Exception('No authentication token found');
+
+    try {
+      final response = await ApiService.dio.delete(
+        '/profile',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        await SecureStorageService.deleteToken();
+        return;
+      }
+
+      throw Exception('Failed to delete account: ${response.statusCode}');
+    } on DioException catch (e) {
+      throw Exception('Failed to delete account: $e');
+    }
+  }
+
   // ==== NUOVI METODI PER FORGOT PASSWORD ====
 
   /// Invia la mail con il codice a 4 cifre

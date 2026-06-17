@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -26,6 +27,18 @@ func (h *OffersHandler) List(c *gin.Context) {
 		c.String(http.StatusInternalServerError, "Errore nel caricamento delle offerte")
 		return
 	}
+
+	for i := range offers {
+		if len(offers[i].ImmagineURL) > 0 {
+			offers[i].ImmagineURL = filepath.ToSlash(offers[i].ImmagineURL)
+			if !strings.HasPrefix(offers[i].ImmagineURL, "http") {
+				if offers[i].ImmagineURL[0] != '/' {
+					offers[i].ImmagineURL = "/" + offers[i].ImmagineURL
+				}
+			}
+		}
+	}
+
 	c.HTML(http.StatusOK, "offers.html", gin.H{
 		"Title":  "Gestione Offerte",
 		"Offers": offers,
@@ -77,12 +90,13 @@ func (h *OffersHandler) CreatePost(c *gin.Context) {
 		}
 
 		dst := filepath.Join(uploadDir, filename)
-		if err := c.SaveUploadedFile(file, dst); err != nil {
-			c.String(http.StatusInternalServerError, "Errore salvataggio immagine")
+		if finalPath, err := services.CompressAndSaveImage(file, dst); err != nil {
+			c.String(http.StatusInternalServerError, "Errore salvataggio immagine compressa")
 			return
+		} else {
+			// Rimuovi spazi e slash extra per il database
+			imagePath = "/" + filepath.ToSlash(finalPath)
 		}
-		// Rimuovi spazi e slash extra per il database
-		imagePath = filepath.ToSlash(dst)
 	}
 
 	offer := models.Offer{

@@ -192,3 +192,29 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Profilo aggiornato con successo"})
 }
+
+func (h *AuthHandler) DeleteAccount(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	var uid uint
+	switch v := userID.(type) {
+	case float64:
+		uid = uint(v)
+	case uint:
+		uid = v
+	default:
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	if err := h.authService.DeleteAccount(uid); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Errore eliminazione account"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Account eliminato con successo"})
+}

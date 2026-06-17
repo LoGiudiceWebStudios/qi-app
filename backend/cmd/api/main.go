@@ -67,6 +67,7 @@ func main() {
 		{
 			private.GET("/profile", authHandler.GetProfile)
 			private.POST("/profile/update", authHandler.UpdateProfile)
+			private.DELETE("/profile", authHandler.DeleteAccount)
 			private.POST("/events", handlers.CreateEvent)
 			private.POST("/auth/fcm_token", authHandler.UpdateFCMToken)
 			private.POST("/offers/:id/generate", handlers.GenerateOfferCode)

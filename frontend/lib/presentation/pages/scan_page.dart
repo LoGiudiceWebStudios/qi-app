@@ -206,7 +206,7 @@ class _ScanPageState extends State<ScanPage> {
                   const SizedBox(height: 14),
                   const _GuidaItem(
                     title: '2. Quanti punti ottengo?',
-                    content: 'Otterrai 1 punto per ogni euro speso.',
+                    content: 'L\'accumulo dei punti è proporzionale all\'importo della tua spesa. Inoltre, il sistema applica un moltiplicatore variabile che premia le tue consumazioni in specifiche fasce orarie della giornata.',
                   ),
                   const SizedBox(height: 14),
                   const _GuidaItem(
@@ -269,6 +269,13 @@ class _ScanPageState extends State<ScanPage> {
           separatorBuilder: (context, index) => const SizedBox(height: 14),
           itemBuilder: (context, index) {
             final reward = rewards[index];
+            final String rawImage = reward['immagine_url'] ?? '';
+            final String? imageUrl = rawImage.isNotEmpty
+                ? (rawImage.startsWith('http')
+                    ? rawImage
+                    : "${ApiService.serverUrl}${rawImage.startsWith('/') ? '' : '/'}${rawImage.replaceAll('\\', '/')}")
+                : null;
+
             return Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -292,13 +299,21 @@ class _ScanPageState extends State<ScanPage> {
                       color: AppColors.topBarOffers.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Center(
-                      child: Icon(
-                        Icons.card_giftcard,
-                        color: AppColors.topBarOffers,
-                        size: 30,
-                      ),
-                    ),
+                    clipBehavior: Clip.hardEdge,
+                    child: imageUrl != null
+                        ? Image.network(
+                            imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Icon(Icons.error, color: AppColors.topBarOffers),
+                          )
+                        : Center(
+                            child: Icon(
+                              Icons.card_giftcard,
+                              color: AppColors.topBarOffers,
+                              size: 30,
+                            ),
+                          ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(

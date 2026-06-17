@@ -1,4 +1,4 @@
-package com.qi.app
+package com.qifoodfocus.app
 
 import io.flutter.embedding.android.FlutterActivity
 

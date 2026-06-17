@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:675445824557:android:ddb2ebdc4ebb81ad916ca4",
         "android_client_info": {
-          "package_name": "com.qi.app"
+          "package_name": "com.qifoodfocus.app"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "675445824557-lul25qcfo9quurj00privqnngajft895.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.qi.app",
+            "package_name": "com.qifoodfocus.app",
             "certificate_hash": "8817fc52c2a46ccedd5724a20ceae33f5670c4ac"
           }
         },

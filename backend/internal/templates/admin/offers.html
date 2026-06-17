@@ -26,7 +26,7 @@
                     <td class="px-6 py-4 text-sm text-gray-600">#{{ .ID }}</td>
                     <td class="px-6 py-4">
                         {{ if .ImmagineURL }}
-                            <img src="/{{ .ImmagineURL }}" class="h-10 w-10 object-cover rounded-md border border-gray-300">
+                            <img src="{{ .ImmagineURL }}" class="h-10 w-10 object-cover rounded-md border border-gray-300">
                         {{ else }}
                             <div class="h-10 w-10 bg-gray-200 rounded-md flex items-center justify-center text-xs text-gray-400 border border-gray-300">N/D</div>
                         {{ end }}

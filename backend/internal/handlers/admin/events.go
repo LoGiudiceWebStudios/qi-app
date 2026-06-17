@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -28,9 +29,10 @@ func (h *EventsHandler) RenderEvents(c *gin.Context) {
 	for i := range events {
 		if len(events[i].ImmagineURL) > 0 {
 			events[i].ImmagineURL = filepath.ToSlash(events[i].ImmagineURL)
-			// Rimuove slash iniziale se c'è un doppio slash causato dal template
-			if events[i].ImmagineURL[0] == '/' {
-				events[i].ImmagineURL = events[i].ImmagineURL[1:]
+			if !strings.HasPrefix(events[i].ImmagineURL, "http") {
+				if events[i].ImmagineURL[0] != '/' {
+					events[i].ImmagineURL = "/" + events[i].ImmagineURL
+				}
 			}
 		}
 	}
@@ -70,12 +72,11 @@ func (h *EventsHandler) CreateEvent(c *gin.Context) {
 		filename := fmt.Sprintf("%d_%s", time.Now().Unix(), filepath.Base(file.Filename))
 		outPath := filepath.Join("uploads/events", filename)
 
-		// Create a separate variable for the URL that always uses forward slashes
-		urlPath := "/uploads/events/" + filename
-
-		// Salva il file
-		if err := c.SaveUploadedFile(file, outPath); err == nil {
-			immagineURL = urlPath // Lo salviamo come stringa da servire al frontend
+		// Salva il file compresso
+		if finalPath, err := services.CompressAndSaveImage(file, outPath); err == nil {
+			// Sostituiamo backslash convertiti e nome finale (es. .jpg) per l'URL
+			imageFinalUrl := filepath.ToSlash(finalPath)
+			immagineURL = "/" + imageFinalUrl // Lo salviamo come stringa da servire al frontend
 		}
 	}
 

@@ -263,12 +263,12 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget _buildTopHeader(BuildContext context, HomeData homeData) {
     // Altezza aggiornata in modo che la card sia tutta dentro l'immagine
     return SizedBox(
-      height: 380,
+      height: 400,
       child: Stack(
         children: [
           // Sfondo con immagine burger
           Container(
-            height: 380,
+            height: 400,
             width: double.infinity,
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -333,7 +333,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             left: 24,
             right: 24,
             child: Container(
-              height: 110,
+              height: 130,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
@@ -355,7 +355,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                 children: [
                   // Prima metà superiore gialla (Header Card)
                   Container(
-                    height: 46,
+                    height: 66,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
                     decoration: BoxDecoration(
                       color: yellowColor,
                       borderRadius: const BorderRadius.only(
@@ -363,66 +364,122 @@ class _HomePageState extends ConsumerState<HomePage> {
                         topRight: Radius.circular(24),
                       ),
                     ),
-                    child: Row(
+                    child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Container(
-                          width: 22,
-                          height: 22,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Image.asset(
-                              'assets/icons/Logo.png',
-                              width: 40,
-                              height: 40,
-                              fit: BoxFit.contain,
+                        // Riga Locale
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 18,
+                              height: 18,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Image.asset(
+                                  'assets/icons/Logo.png',
+                                  width: 24,
+                                  height: 24,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 8),
+                            // Pallino verde / rosso
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: homeData.isOpen ? greenColor : Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              homeData.isOpen ? 'Locale Aperto' : 'Locale Chiuso',
+                              style: const TextStyle(
+                                fontFamily: 'Open Sauce',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // Pallino grigio
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Colors.grey,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              homeData.isOpen
+                                  ? 'Fino alle ${homeData.closingTime}'
+                                  : 'Apre alle ${homeData.openingTime}',
+                              style: const TextStyle(
+                                fontFamily: 'Open Sauce',
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        // Pallino verde / rosso
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: homeData.isOpen ? greenColor : Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          homeData.isOpen ? 'Aperto' : 'Chiuso',
-                          style: const TextStyle(
-                            fontFamily: 'Open Sauce',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // Pallino grigio
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Colors.grey,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          homeData.isOpen
-                              ? 'Fino alle ${homeData.closingTime}'
-                              : 'Apre alle ${homeData.openingTime}',
-                          style: const TextStyle(
-                            fontFamily: 'Open Sauce',
-                            color: Colors.black54,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13,
-                          ),
+                        const SizedBox(height: 4),
+                        // Riga Cucina
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.restaurant, size: 14, color: Colors.black54),
+                            const SizedBox(width: 6),
+                            // Pallino verde / rosso per cucina
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: homeData.isKitchenOpen ? greenColor : Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              homeData.isKitchenOpen ? 'Cucina Aperta' : 'Cucina Chiusa',
+                              style: const TextStyle(
+                                fontFamily: 'Open Sauce',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // Pallino grigio per cucina
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Colors.grey,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              homeData.isKitchenOpen
+                                  ? 'Fino alle ${homeData.kitchenClosingTime}'
+                                  : 'Apre alle ${homeData.kitchenOpeningTime}',
+                              style: const TextStyle(
+                                fontFamily: 'Open Sauce',
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

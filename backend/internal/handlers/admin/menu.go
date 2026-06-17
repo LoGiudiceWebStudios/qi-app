@@ -5,11 +5,12 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"qi-backend/internal/database"
 	"strconv"
 	"time"
 
+	"qi-backend/internal/database"
 	"qi-backend/internal/models"
+	"qi-backend/internal/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -73,8 +74,8 @@ func (h *MenuHandler) CreateCategory(c *gin.Context) {
 		os.MkdirAll("uploads/categories", os.ModePerm)
 		filename := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
 		filepath := fmt.Sprintf("uploads/categories/%s", filename)
-		if err := c.SaveUploadedFile(file, filepath); err == nil {
-			imageURL = "/" + filepath
+		if finalPath, err := services.CompressAndSaveImage(file, filepath); err == nil {
+			imageURL = "/" + finalPath
 		}
 	}
 
@@ -121,8 +122,8 @@ func (h *MenuHandler) CreateProduct(c *gin.Context) {
 		os.MkdirAll("uploads/products", os.ModePerm)
 		filename := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
 		filepath := fmt.Sprintf("uploads/products/%s", filename)
-		if err := c.SaveUploadedFile(file, filepath); err == nil {
-			imageURL = "/" + filepath
+		if finalPath, err := services.CompressAndSaveImage(file, filepath); err == nil {
+			imageURL = "/" + finalPath
 		}
 	}
 

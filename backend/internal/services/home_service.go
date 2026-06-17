@@ -27,7 +27,17 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 	var openingTime models.Setting
 	database.DB.Where("key = ?", "opening_time").Attrs(models.Setting{Value: "18:00"}).FirstOrCreate(&openingTime)
 
+	var forcedKitchenStatus models.Setting
+	database.DB.Where("key = ?", "forced_kitchen_status").Attrs(models.Setting{Value: "auto"}).FirstOrCreate(&forcedKitchenStatus)
+
+	var kitchenOpeningTime models.Setting
+	database.DB.Where("key = ?", "kitchen_opening_time").Attrs(models.Setting{Value: "19:00"}).FirstOrCreate(&kitchenOpeningTime)
+
+	var kitchenClosingTime models.Setting
+	database.DB.Where("key = ?", "kitchen_closing_time").Attrs(models.Setting{Value: "23:00"}).FirstOrCreate(&kitchenClosingTime)
+
 	isOpen := false
+	isKitchenOpen := false
 	loc, _ := time.LoadLocation("Europe/Rome")
 	nowH := time.Now().In(loc).Format("15:04")
 	// Assicure padding zeri per il confronto (es. "9:00" -> "09:00")
@@ -40,6 +50,8 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 
 	opTime := padTime(openingTime.Value)
 	clTime := padTime(closingTime.Value)
+	kopTime := padTime(kitchenOpeningTime.Value)
+	kclTime := padTime(kitchenClosingTime.Value)
 
 	if forcedStatus.Value == "open" {
 		isOpen = true
@@ -54,6 +66,23 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 		} else {
 			if nowH >= opTime && nowH < clTime {
 				isOpen = true
+			}
+		}
+	}
+
+	if forcedKitchenStatus.Value == "open" {
+		isKitchenOpen = true
+	} else if forcedKitchenStatus.Value == "closed" {
+		isKitchenOpen = false
+	} else {
+		// Logica auto
+		if kopTime > kclTime {
+			if nowH >= kopTime || nowH < kclTime {
+				isKitchenOpen = true
+			}
+		} else {
+			if nowH >= kopTime && nowH < kclTime {
+				isKitchenOpen = true
 			}
 		}
 	}
@@ -97,12 +126,15 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 	}
 
 	return &models.HomeData{
-		IsOpen:       isOpen,
-		OpeningTime:  openingTime.Value,
-		ClosingTime:  closingTime.Value,
-		LocationName: "Via Luigi Einaudi, 18",
-		NextEvent:    nextEventTitle,
-		Events:       homeEvents,
-		Offers:       homeOffers,
+		IsOpen:             isOpen,
+		OpeningTime:        openingTime.Value,
+		ClosingTime:        closingTime.Value,
+		IsKitchenOpen:      isKitchenOpen,
+		KitchenOpeningTime: kitchenOpeningTime.Value,
+		KitchenClosingTime: kitchenClosingTime.Value,
+		LocationName:       "Via Luigi Einaudi, 18",
+		NextEvent:          nextEventTitle,
+		Events:             homeEvents,
+		Offers:             homeOffers,
 	}, nil
 }

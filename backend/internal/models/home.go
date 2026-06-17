@@ -24,11 +24,14 @@ type OfferAPI struct {
 }
 
 type HomeData struct {
-	IsOpen       bool        `json:"isOpen"`
-	OpeningTime  string      `json:"openingTime"`
-	ClosingTime  string      `json:"closingTime"`
-	LocationName string      `json:"locationName"`
-	NextEvent    string      `json:"nextEvent"`
-	Events       []HomeEvent `json:"events"`
-	Offers       []HomeOffer `json:"offers"`
+	IsOpen             bool        `json:"isOpen"`
+	OpeningTime        string      `json:"openingTime"`
+	ClosingTime        string      `json:"closingTime"`
+	IsKitchenOpen      bool        `json:"isKitchenOpen"`
+	KitchenOpeningTime string      `json:"kitchenOpeningTime"`
+	KitchenClosingTime string      `json:"kitchenClosingTime"`
+	LocationName       string      `json:"locationName"`
+	NextEvent          string      `json:"nextEvent"`
+	Events             []HomeEvent `json:"events"`
+	Offers             []HomeOffer `json:"offers"`
 }

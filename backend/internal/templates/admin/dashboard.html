@@ -37,7 +37,7 @@
     <h2 class="text-xl text-gray-800 font-semibold mb-4">Stato Locale & Orari</h2>
     <form action="/admin/settings" method="POST" class="space-y-4">
         <div>
-            <label class="block text-sm font-medium text-gray-700">Forza Stato</label>
+            <label class="block text-sm font-medium text-gray-700">Forza Stato Locale</label>
             <select name="forced_status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md">
                 <option value="auto" {{ if eq .ForcedStatus "auto" }}selected{{ end }}>Automatico (in base a orari)</option>
                 <option value="open" {{ if eq .ForcedStatus "open" }}selected{{ end }}>Forza Aperto</option>
@@ -54,6 +54,29 @@
                 <input type="time" name="closing_time" value="{{ .ClosingTime }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
             </div>
         </div>
+        
+        <hr class="my-4 border-gray-200">
+        
+        <h3 class="text-lg text-gray-800 font-semibold mb-2">Stato Cucina & Orari</h3>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Forza Stato Cucina</label>
+            <select name="forced_kitchen_status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md">
+                <option value="auto" {{ if eq .ForcedKitchenStatus "auto" }}selected{{ end }}>Automatico (in base a orari)</option>
+                <option value="open" {{ if eq .ForcedKitchenStatus "open" }}selected{{ end }}>Forza Aperto</option>
+                <option value="closed" {{ if eq .ForcedKitchenStatus "closed" }}selected{{ end }}>Forza Chiuso</option>
+            </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Orario Apertura Cucina</label>
+                <input type="time" name="kitchen_opening_time" value="{{ .KitchenOpeningTime }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Orario Chiusura Cucina</label>
+                <input type="time" name="kitchen_closing_time" value="{{ .KitchenClosingTime }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+            </div>
+        </div>
+
         <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
             Salva Impostazioni
         </button>

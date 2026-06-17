@@ -36,6 +36,9 @@ class HomeData {
   final bool isOpen;
   final String openingTime;
   final String closingTime;
+  final bool isKitchenOpen;
+  final String kitchenOpeningTime;
+  final String kitchenClosingTime;
   final String locationName;
   final String nextEvent;
   final List<HomeEvent> events;
@@ -45,6 +48,9 @@ class HomeData {
     required this.isOpen,
     required this.openingTime,
     required this.closingTime,
+    required this.isKitchenOpen,
+    required this.kitchenOpeningTime,
+    required this.kitchenClosingTime,
     required this.locationName,
     required this.nextEvent,
     required this.events,
@@ -62,6 +68,9 @@ class HomeData {
       isOpen: json['isOpen'] ?? false,
       openingTime: json['openingTime'] ?? '',
       closingTime: json['closingTime'] ?? '',
+      isKitchenOpen: json['isKitchenOpen'] ?? false,
+      kitchenOpeningTime: json['kitchenOpeningTime'] ?? '',
+      kitchenClosingTime: json['kitchenClosingTime'] ?? '',
       locationName: json['locationName'] ?? '',
       nextEvent: json['nextEvent'] ?? '',
       events: eventsList,

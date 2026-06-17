@@ -284,35 +284,102 @@ class _ProfilePageState extends State<ProfilePage> {
 
                     const SizedBox(height: 20),
 
-                    // Logout button
-                    GestureDetector(
-                      onTap: () async {
-                        await AuthApiService.logout();
-                        if (context.mounted) {
-                          Navigator.pushReplacementNamed(context, '/login');
-                        }
-                      },
-                      child: Row(
-                        children: [
-                          const Text(
-                            "logout",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontFamily: 'Open Sauce',
-                              fontWeight: FontWeight.w600,
-                              decoration: TextDecoration.underline,
-                              decorationColor: Colors.white,
-                            ),
+                    // Logout + Elimina account
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () async {
+                            await AuthApiService.logout();
+                            if (context.mounted) {
+                              Navigator.pushReplacementNamed(context, '/login');
+                            }
+                          },
+                          child: Row(
+                            children: const [
+                              Text(
+                                "logout",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontFamily: 'Open Sauce',
+                                  fontWeight: FontWeight.w600,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Icon(
+                                Icons.exit_to_app,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          const Icon(
-                            Icons.exit_to_app,
-                            color: Colors.white,
-                            size: 18,
+                        ),
+                        const SizedBox(width: 18),
+                        GestureDetector(
+                          onTap: () async {
+                            final shouldDelete = await showDialog<bool>(
+                              context: context,
+                              builder: (dialogContext) {
+                                return AlertDialog(
+                                  title: const Text('Elimina account'),
+                                  content: const Text('Sei sicuro? Questa azione non puo essere annullata.'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(dialogContext).pop(false),
+                                      child: const Text('Annulla'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.of(dialogContext).pop(true),
+                                      child: const Text('Elimina', style: TextStyle(color: Colors.red)),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+
+                            if (shouldDelete != true) return;
+
+                            setState(() => _isLoading = true);
+                            try {
+                              await AuthApiService.deleteAccount();
+                              if (context.mounted) {
+                                Navigator.pushReplacementNamed(context, '/login');
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Errore eliminazione account')),
+                                );
+                              }
+                            } finally {
+                              if (mounted) setState(() => _isLoading = false);
+                            }
+                          },
+                          child: Row(
+                            children: const [
+                              Text(
+                                "elimina account",
+                                style: TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 14,
+                                  fontFamily: 'Open Sauce',
+                                  fontWeight: FontWeight.w600,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: Colors.redAccent,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Icon(
+                                Icons.delete_outline,
+                                color: Colors.redAccent,
+                                size: 18,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
 
                     const SizedBox(height: 25),
