@@ -12,9 +12,14 @@ class Model3DPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // If we only have the path from DB, prepend the base server URL
+    // Il file .glb per Android e il render 3D di base
     final modelUrl = product.model3dUrl != null && product.model3dUrl!.isNotEmpty
         ? Uri.encodeFull('${ApiService.serverUrl}${product.model3dUrl}')
+        : '';
+        
+    // Il file .usdz specifico per AR su iOS
+    final iosModelUrl = product.model3dIosUrl != null && product.model3dIosUrl!.isNotEmpty
+        ? Uri.encodeFull('${ApiService.serverUrl}${product.model3dIosUrl}')
         : '';
 
     return Scaffold(
@@ -41,6 +46,7 @@ class Model3DPage extends StatelessWidget {
                 ? ModelViewer(
                     backgroundColor: const Color(0xFFFAFBFA),
                     src: modelUrl,
+                    iosSrc: iosModelUrl.isNotEmpty ? iosModelUrl : null,
                     alt: "Modello 3D di ${product.name}",
                     ar: true, // Riattiviamo la Realtà Aumentata per usare la fotocamera
                     autoRotate: true,

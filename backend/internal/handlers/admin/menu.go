@@ -108,6 +108,8 @@ func (h *MenuHandler) CreateProduct(c *gin.Context) {
 
 	var imageURL string
 	var modelURL string
+	var modelIosURL string
+
 	file3d, err3d := c.FormFile("modello_3d")
 	if err3d == nil {
 		os.MkdirAll("uploads/models3d", os.ModePerm)
@@ -117,6 +119,17 @@ func (h *MenuHandler) CreateProduct(c *gin.Context) {
 			modelURL = "/" + filepath3d
 		}
 	}
+
+	file3dIos, err3dIos := c.FormFile("modello_3d_ios")
+	if err3dIos == nil {
+		os.MkdirAll("uploads/models3d", os.ModePerm)
+		filename3dIos := fmt.Sprintf("%d_ios_%s", time.Now().Unix(), file3dIos.Filename)
+		filepath3dIos := fmt.Sprintf("uploads/models3d/%s", filename3dIos)
+		if err := c.SaveUploadedFile(file3dIos, filepath3dIos); err == nil {
+			modelIosURL = "/" + filepath3dIos
+		}
+	}
+
 	file, err := c.FormFile("immagine")
 	if err == nil {
 		os.MkdirAll("uploads/products", os.ModePerm)
@@ -128,13 +141,14 @@ func (h *MenuHandler) CreateProduct(c *gin.Context) {
 	}
 
 	product := models.Product{
-		CategoryID:  uint(catID),
-		Name:        name,
-		ShortDesc:   shortDesc,
-		Description: desc,
-		Price:       price,
-		ImageURL:    imageURL,
-		Model3dUrl:  modelURL,
+		CategoryID:    uint(catID),
+		Name:          name,
+		ShortDesc:     shortDesc,
+		Description:   desc,
+		Price:         price,
+		ImageURL:      imageURL,
+		Model3dUrl:    modelURL,
+		Model3DIosUrl: modelIosURL,
 	}
 
 	if err := database.DB.Create(&product).Error; err != nil {
