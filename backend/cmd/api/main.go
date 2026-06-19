@@ -20,6 +20,8 @@ func main() {
 	log.Println("Inizializzazione del database...")
 	database.Connect()
 
+	middleware.InitMimeTypes()
+
 	log.Println("Inizializzazione di Firebase e Cron Jobs...")
 	services.InitFirebase()
 	services.StartCronJobs()
@@ -40,6 +42,7 @@ func main() {
 	userPointsHandler := handlers.NewUserPointsHandler()
 
 	router := gin.Default()
+	router.Use(middleware.CORSMiddleware())
 	router.Static("/uploads", "./uploads")
 
 	router.LoadHTMLGlob("internal/templates/admin/*.html")
