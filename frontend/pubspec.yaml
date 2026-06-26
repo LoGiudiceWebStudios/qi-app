@@ -1,7 +1,7 @@
 name: frontend
 description: "A new Flutter project for QI."
 publish_to: "none"
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: ^3.7.0
@@ -27,6 +27,9 @@ dependencies:
   firebase_remote_config: ^6.5.1
   url_launcher: ^6.3.2
   model_viewer_plus: ^1.10.0
+  path_provider: ^2.1.6
+  open_filex: ^4.7.0
+  quick_look: ^0.2.0
 
 dev_dependencies:
   flutter_test:

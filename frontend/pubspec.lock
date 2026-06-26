@@ -664,6 +664,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
+  open_filex:
+    dependency: "direct main"
+    description:
+      name: open_filex
+      sha256: "9976da61b6a72302cf3b1efbce259200cd40232643a467aac7370addf94d6900"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.7.0"
   package_config:
     dependency: transitive
     description:
@@ -705,7 +713,7 @@ packages:
     source: hosted
     version: "1.1.0"
   path_provider:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: path_provider
       sha256: a7f4874f987173da295a61c181b8ee71dab59b332a486b391babf26a1b884825
@@ -816,6 +824,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.0"
+  quick_look:
+    dependency: "direct main"
+    description:
+      name: quick_look
+      sha256: b6797d22d0c038a660715d27c477424472d32f1b1b51ed450e8a52ad50a7251e
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   record_use:
     dependency: transitive
     description:

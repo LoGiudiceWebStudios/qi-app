@@ -81,6 +81,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                   _homeDataFuture = HomeApi().fetchHomeData();
                 });
                 ref.read(bottomNavIndexProvider.notifier).setIndex(index);
+              } else if (index == 3) {
+                // Menu can be accessed without login
+                ref.read(bottomNavIndexProvider.notifier).setIndex(index);
               } else {
                 final token = await SecureStorageService.getToken();
                 if (token == null) {
@@ -142,12 +145,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                       Icons.restaurant_menu_rounded,
                       greenColor,
                       onTap: () async {
-                        final token = await SecureStorageService.getToken();
-                        if (token == null) {
-                          _showLoginRequiredMessage();
-                        } else {
-                          ref.read(bottomNavIndexProvider.notifier).setIndex(3);
-                        }
+                        // Menu can be accessed without login
+                        ref.read(bottomNavIndexProvider.notifier).setIndex(3);
                       },
                     ),
                     const SizedBox(width: 12),

@@ -167,21 +167,21 @@ class _LoginScreenState extends State<LoginScreen> {
                   SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24.0,
-                      vertical: 40.0,
+                      vertical: 30.0,
                     ),
                     child: Column(
                       children: [
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 10),
 
                         // LOGO
                         Image.asset(
                           'assets/icons/Logo_2.jpg',
-                          width: 212,
-                          height: 212,
+                          width: 200,
+                          height: 200,
                           fit: BoxFit.contain,
                         ),
 
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 20),
 
                     // Social Buttons
                     Row(
@@ -201,12 +201,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     const Text(
                       "Or",
                       style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
                     // Text Fields
                     _buildTextField(

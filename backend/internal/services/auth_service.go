@@ -191,7 +191,13 @@ func (s *AuthService) SocialLogin(req models.SocialLoginRequest) (string, *model
 		}
 	}
 
-	err := database.DB.Where("email = ?", req.Email).First(&user).Error
+	// Cerca prima per ID social
+	err := database.DB.Where("social_id = ? AND provider = ?", req.SocialID, req.Provider).First(&user).Error
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		// Se non lo trova, prova a vedere se esiste già quell'email per collegare l'account
+		err = database.DB.Where("email = ?", req.Email).First(&user).Error
+	}
+
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			user = models.User{
