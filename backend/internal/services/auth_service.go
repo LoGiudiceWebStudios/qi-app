@@ -26,7 +26,7 @@ func NewAuthService() *AuthService {
 	return &AuthService{}
 }
 
-// GenerateJWT crea un token con l'ID dell'utente che scade dopo 72 ore
+// GenerateJWT crea un token con l'ID dell'utente che scade dopo 365 giorni
 func (s *AuthService) GenerateJWT(userID uint) (string, error) {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
@@ -35,7 +35,7 @@ func (s *AuthService) GenerateJWT(userID uint) (string, error) {
 
 	claims := jwt.MapClaims{
 		"sub": userID,
-		"exp": time.Now().Add(time.Hour * 72).Unix(),
+		"exp": time.Now().Add(time.Hour * 24 * 365).Unix(),
 		"iat": time.Now().Unix(),
 	}
 

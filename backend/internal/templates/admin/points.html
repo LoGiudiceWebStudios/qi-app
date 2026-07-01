@@ -1,28 +1,29 @@
 ﻿{{ template "layout_top" . }}
 
-<main class="flex-1 flex flex-col h-screen overflow-hidden">
-    <header class="h-16 bg-white border-b flex items-center justify-between px-6 shrink-0">
-        <h1 class="text-xl font-semibold text-gray-800">Genera Punti in Cassa</h1>
-    </header>
+<div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+    <h2 class="text-lg font-medium text-gray-900 mb-4">Emissione Punti Fedelta'</h2>
+    <p class="text-sm text-gray-500 mb-6">Inserisci l'importo della spesa per generare un codice QR usa-e-getta. Il cliente potra' scansionarlo tramite l'app per accreditare i punti.</p>
+    
+    <form id="generatePointsForm" class="space-y-4">
+        <div>
+            <label for="importo" class="block text-sm font-medium text-gray-700">Importo Spesa (€)</label>
+            <input type="number" id="importo" name="importo" step="0.01" required
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+        </div>
 
-    <div class="flex-1 overflow-y-auto p-6 bg-gray-50">
-        <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 class="text-lg font-medium text-gray-900 mb-4">Emissione Punti Fedelta'</h2>
-            <p class="text-sm text-gray-500 mb-6">Inserisci l'importo della spesa per generare un codice QR usa-e-getta. Il cliente potra' scansionarlo tramite l'app per accreditare i punti.</p>
-            
-            <form id="generatePointsForm" class="space-y-4">
-                <div>
-                    <label for="importo" class="block text-sm font-medium text-gray-700">Importo Spesa (€)</label>
-                    <input type="number" id="importo" name="importo" step="0.01" required
-                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
-                </div>
-
-                <div>
-                    <label for="moltiplicatore" class="block text-sm font-medium text-gray-700">Moltiplicatore (Punti per €)</label>
-                    <input type="number" id="moltiplicatore" name="moltiplicatore" step="0.1" value="1.0" required
-                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
-                    <p class="mt-1 text-xs text-gray-500">Es. 1.0 significa 1 punto ogni euro speso. 2.0 significa 2 punti per euro.</p>
-                </div>
+        <div>
+            <label for="moltiplicatore" class="block text-sm font-medium text-gray-700">Moltiplicatore (Punti per €)</label>
+            <input type="number" id="moltiplicatore" name="moltiplicatore" step="0.1" value="1.0" required
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+            <p class="mt-1 text-xs text-gray-500">Es. 1.0 significa 1 punto ogni euro speso. 2.0 significa 2 punti per euro.</p>
+            <div class="flex gap-2 mt-2">
+                <button type="button" onclick="setMulti(1.2)" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">Colazione (1.2)</button>
+                <button type="button" onclick="setMulti(1.2)" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">Pranzo (1.2)</button>
+                <button type="button" onclick="setMulti(0.9)" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">Pomeriggio (0.9)</button>
+                <button type="button" onclick="setMulti(0.7)" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">Cena (0.7)</button>
+            </div>
+            <script>function setMulti(val) { document.getElementById('moltiplicatore').value = val; }</script>
+        </div>
 
                 <div class="pt-4">
                     <button type="submit"
@@ -87,8 +88,6 @@
                 </button>
             </div>
         </div>
-    </div>
-</main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>

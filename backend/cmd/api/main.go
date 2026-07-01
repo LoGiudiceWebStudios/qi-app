@@ -39,6 +39,7 @@ func main() {
 	adminNotificationsHandler := admin.NewNotificationsHandler()
 	adminPointsHandler := admin.NewPointsHandler()
 	adminRewardsHandler := admin.NewRewardsHandler()
+	adminUsersHandler := admin.NewUsersHandler()
 	userPointsHandler := handlers.NewUserPointsHandler()
 
 	router := gin.Default()
@@ -106,6 +107,7 @@ func main() {
 			protected.POST("/menu/categories/:id/delete", adminMenuHandler.DeleteCategory)
 			protected.POST("/menu/products", adminMenuHandler.CreateProduct)
 			protected.POST("/menu/products/:id/delete", adminMenuHandler.DeleteProduct)
+			protected.GET("/users", adminUsersHandler.HandleIndex)
 			protected.GET("/notifications", adminNotificationsHandler.Index)
 			protected.POST("/notifications", adminNotificationsHandler.SendPost)
 			protected.POST("/notifications/schedule", adminNotificationsHandler.SchedulePost)

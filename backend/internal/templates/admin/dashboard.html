@@ -30,8 +30,6 @@
    
 </div>
 
-</div>
-
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
 <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
     <h2 class="text-xl text-gray-800 font-semibold mb-4">Stato Locale & Orari</h2>
@@ -107,28 +105,32 @@
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <script>
-    let html5QrcodeScanner = null;
+    let html5QrCode = null;
 
-    function onScanSuccess(decodedText, decodedResult) {
+    async function onScanSuccess(decodedText, decodedResult) {
         document.getElementById("offerCode").value = decodedText;
-        if(html5QrcodeScanner) {
-            html5QrcodeScanner.clear();
-            document.getElementById("reader").style.display = "none";
+        
+        if (html5QrCode && html5QrCode.isScanning) {
+            await html5QrCode.stop().catch(console.error);
         }
+        document.getElementById("reader").style.display = "none";
+        
         validateCode();
-    }
-
-    function onScanFailure(error) {
-        // handle scan failure
     }
 
     function startScanner() {
         document.getElementById("reader").style.display = "block";
-        html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader",
-            { fps: 10, qrbox: {width: 250, height: 250} },
-            /* verbose= */ false);
-        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode("reader");
+        }
+
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        
+        html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+            .catch(err => {
+                alert("Errore nell'avvio della fotocamera: " + err);
+                document.getElementById("reader").style.display = "none";
+            });
     }
 
     async function validateCode() {
