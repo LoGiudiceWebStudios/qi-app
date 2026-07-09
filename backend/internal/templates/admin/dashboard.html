@@ -27,13 +27,18 @@
 
 <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6 mb-8">
     <h2 class="text-xl text-gray-800 font-semibold mb-4 leading-loose">Pannello di controllo</h2>
-   
+   <div class="flex items-center justify-between gap-4 flex-wrap">
+        <p class="text-sm text-gray-600">Versione autenticazione attuale: <span class="font-semibold text-gray-900">{{ .AuthVersion }}</span></p>
+        <form action="/admin/logout-all" method="POST" onsubmit="return confirm('Confermi il logout forzato di tutti gli account? Tutte le sessioni attive verranno invalidate.');">
+            <button type="submit" class="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white text-sm font-semibold">Forza Logout Tutti</button>
+        </form>
+   </div>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
 <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
     <h2 class="text-xl text-gray-800 font-semibold mb-4">Stato Locale & Orari</h2>
-    <form action="/admin/settings" method="POST" class="space-y-4">
+    <form action="/admin/settings" method="POST" class="space-y-4" onsubmit="serializeSchedules()">
         <div>
             <label class="block text-sm font-medium text-gray-700">Forza Stato Locale</label>
             <select name="forced_status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md">
@@ -42,15 +47,11 @@
                 <option value="closed" {{ if eq .ForcedStatus "closed" }}selected{{ end }}>Forza Chiuso</option>
             </select>
         </div>
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Orario Apertura</label>
-                <input type="time" name="opening_time" value="{{ .OpeningTime }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Orario Chiusura</label>
-                <input type="time" name="closing_time" value="{{ .ClosingTime }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
-            </div>
+        
+        <input type="hidden" name="venue_schedule" id="venue_schedule_input" value="{{ .VenueSchedule }}">
+        <div id="venue-schedule-container" class="space-y-2 mt-4">
+            <label class="block text-sm font-medium text-gray-700">Orari Settimanali Locale</label>
+            <!-- UI JS riempirà i giorni qui -->
         </div>
         
         <hr class="my-4 border-gray-200">
@@ -64,18 +65,14 @@
                 <option value="closed" {{ if eq .ForcedKitchenStatus "closed" }}selected{{ end }}>Forza Chiuso</option>
             </select>
         </div>
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Orario Apertura Cucina</label>
-                <input type="time" name="kitchen_opening_time" value="{{ .KitchenOpeningTime }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Orario Chiusura Cucina</label>
-                <input type="time" name="kitchen_closing_time" value="{{ .KitchenClosingTime }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
-            </div>
+        
+        <input type="hidden" name="kitchen_schedule" id="kitchen_schedule_input" value="{{ .KitchenSchedule }}">
+        <div id="kitchen-schedule-container" class="space-y-2 mt-4">
+            <label class="block text-sm font-medium text-gray-700">Orari Settimanali Cucina</label>
+            <!-- UI JS riempirà i giorni qui -->
         </div>
 
-        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+        <button type="submit" class="w-full mt-6 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
             Salva Impostazioni
         </button>
     </form>
@@ -134,6 +131,7 @@
     }
 
     async function validateCode() {
+        // ... (resto della funzione non mostrata per brevità, non cambiamo nulla qui)
         const code = document.getElementById('offerCode').value;
         if (!code) return;
 
@@ -162,6 +160,104 @@
         }
         resDiv.style.display = "block";
     }
+
+    // -- INIZIO SCHEDULE BUILDER --
+    const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+    const dayNames = {"monday": "Lunedì", "tuesday": "Martedì", "wednesday": "Mercoledì", "thursday": "Giovedì", "friday": "Venerdì", "saturday": "Sabato", "sunday": "Domenica"};
+
+    function parseInitialSchedule(val) {
+        try {
+            return JSON.parse(val || '{"monday":[],"tuesday":[],"wednesday":[],"thursday":[],"friday":[],"saturday":[],"sunday":[]}');
+        } catch(e) {
+            return {"monday":[],"tuesday":[],"wednesday":[],"thursday":[],"friday":[],"saturday":[],"sunday":[]};
+        }
+    }
+
+    let venueSchedule = parseInitialSchedule(document.getElementById("venue_schedule_input").value);
+    let kitchenSchedule = parseInitialSchedule(document.getElementById("kitchen_schedule_input").value);
+
+    function renderScheduleBuilder(containerId, scheduleData, prefix) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        daysOfWeek.forEach(day => {
+            const dayDiv = document.createElement("div");
+            dayDiv.className = "border rounded p-3 mb-2 bg-gray-50";
+            
+            const header = document.createElement("div");
+            header.className = "flex justify-between items-center mb-2";
+            header.innerHTML = `<span class="font-semibold text-gray-700">${dayNames[day]}</span>
+                                <button type="button" onclick="addSlot('${prefix}', '${day}')" class="text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded">+ Aggiungi orario</button>`;
+            dayDiv.appendChild(header);
+
+            const slotsDiv = document.createElement("div");
+            slotsDiv.id = `${prefix}-${day}-slots`;
+            slotsDiv.className = "space-y-2";
+            
+            if (!scheduleData[day]) scheduleData[day] = [];
+            scheduleData[day].forEach((slot, index) => {
+                slotsDiv.appendChild(createSlotHtml(prefix, day, index, slot.start, slot.end));
+            });
+
+            dayDiv.appendChild(slotsDiv);
+            container.appendChild(dayDiv);
+        });
+    }
+
+    function createSlotHtml(prefix, day, index, start, end) {
+        const div = document.createElement("div");
+        div.className = "flex items-center space-x-2";
+        div.innerHTML = `
+            <input type="time" id="${prefix}_${day}_${index}_start" value="${start}" class="border border-gray-300 rounded-md shadow-sm py-1 px-2 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm" required>
+            <span>-</span>
+            <input type="time" id="${prefix}_${day}_${index}_end" value="${end}" class="border border-gray-300 rounded-md shadow-sm py-1 px-2 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm" required>
+            <button type="button" onclick="removeSlot('${prefix}', '${day}', ${index})" class="text-red-500 hover:text-red-700 text-sm ml-2">Rimuovi</button>
+        `;
+        return div;
+    }
+
+    window.addSlot = function(prefix, day) {
+        const schedule = prefix === 'venue' ? venueSchedule : kitchenSchedule;
+        schedule[day].push({start: "18:00", end: "23:00"});
+        renderScheduleBuilder(prefix === 'venue' ? 'venue-schedule-container' : 'kitchen-schedule-container', schedule, prefix);
+    }
+
+    window.removeSlot = function(prefix, day, index) {
+        const schedule = prefix === 'venue' ? venueSchedule : kitchenSchedule;
+        schedule[day].splice(index, 1);
+        renderScheduleBuilder(prefix === 'venue' ? 'venue-schedule-container' : 'kitchen-schedule-container', schedule, prefix);
+    }
+
+    function gatherSchedule(prefix) {
+        const data = {};
+        daysOfWeek.forEach(day => {
+            data[day] = [];
+            const scheduleObj = prefix === 'venue' ? venueSchedule : kitchenSchedule;
+            const slots = scheduleObj[day];
+            if(slots) {
+                for(let i=0; i<slots.length; i++) {
+                    const s = document.getElementById(`${prefix}_${day}_${i}_start`);
+                    const e = document.getElementById(`${prefix}_${day}_${i}_end`);
+                    if(s && e) {
+                        data[day].push({start: s.value, end: e.value});
+                    }
+                }
+            }
+        });
+        return data;
+    }
+
+    window.serializeSchedules = function() {
+        const vSched = gatherSchedule('venue');
+        const kSched = gatherSchedule('kitchen');
+        document.getElementById('venue_schedule_input').value = JSON.stringify(vSched);
+        document.getElementById('kitchen_schedule_input').value = JSON.stringify(kSched);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        renderScheduleBuilder('venue-schedule-container', venueSchedule, 'venue');
+        renderScheduleBuilder('kitchen-schedule-container', kitchenSchedule, 'kitchen');
+    });
+    // -- FINE SCHEDULE BUILDER --
 </script>
 
 {{ template "layout_bottom" . }}

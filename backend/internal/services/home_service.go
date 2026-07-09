@@ -1,7 +1,9 @@
 package services
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"qi-backend/internal/database"
@@ -15,59 +17,109 @@ func NewHomeService() *HomeService {
 	return &HomeService{}
 }
 
+type TimeSlot struct {
+	Start string `json:"start"`
+	End   string `json:"end"`
+}
+
+type WeeklySchedule map[string][]TimeSlot
+
+// padTime Assicura padding zeri per il confronto (es. "9:00" -> "09:00")
+func padTime(t string) string {
+	if len(t) == 4 { // e.g. "9:00"
+		return "0" + t
+	}
+	return t
+}
+
+func getActiveOrUpcomingSlotInfo(nowH string, slots []TimeSlot) (bool, string, string) {
+	if len(slots) == 0 {
+		return false, "Chiuso", ""
+	}
+
+	isOpen := false
+	var activeSlot *TimeSlot
+	var upcomingSlot *TimeSlot
+
+	for _, slot := range slots {
+		s := padTime(slot.Start)
+		e := padTime(slot.End)
+
+		// Check if active
+		if s > e {
+			if nowH >= s || nowH < e {
+				isOpen = true
+				if activeSlot == nil {
+					activeSlot = &slot
+				}
+			}
+		} else {
+			if nowH >= s && nowH < e {
+				isOpen = true
+				if activeSlot == nil {
+					activeSlot = &slot
+				}
+			}
+		}
+
+		// Check if upcoming
+		if s >= nowH && upcomingSlot == nil {
+			upcomingSlot = &slot
+		}
+	}
+
+	if activeSlot != nil {
+		return isOpen, padTime(activeSlot.Start), padTime(activeSlot.End)
+	}
+	if upcomingSlot != nil {
+		return isOpen, padTime(upcomingSlot.Start), padTime(upcomingSlot.End)
+	}
+
+	// fallback to first slot
+	return isOpen, padTime(slots[0].Start), padTime(slots[0].End)
+}
+
 // GetHomeData fetch from database
 func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 
 	var forcedStatus models.Setting
 	database.DB.Where("key = ?", "forced_status").Attrs(models.Setting{Value: "auto"}).FirstOrCreate(&forcedStatus)
 
-	var closingTime models.Setting
-	database.DB.Where("key = ?", "closing_time").Attrs(models.Setting{Value: "02:00"}).FirstOrCreate(&closingTime)
-
-	var openingTime models.Setting
-	database.DB.Where("key = ?", "opening_time").Attrs(models.Setting{Value: "18:00"}).FirstOrCreate(&openingTime)
+	var venueScheduleSet models.Setting
+	database.DB.Where("key = ?", "venue_schedule").Attrs(models.Setting{Value: `{"monday":[],"tuesday":[],"wednesday":[],"thursday":[],"friday":[],"saturday":[],"sunday":[]}`}).FirstOrCreate(&venueScheduleSet)
 
 	var forcedKitchenStatus models.Setting
 	database.DB.Where("key = ?", "forced_kitchen_status").Attrs(models.Setting{Value: "auto"}).FirstOrCreate(&forcedKitchenStatus)
 
-	var kitchenOpeningTime models.Setting
-	database.DB.Where("key = ?", "kitchen_opening_time").Attrs(models.Setting{Value: "19:00"}).FirstOrCreate(&kitchenOpeningTime)
+	var kitchenScheduleSet models.Setting
+	database.DB.Where("key = ?", "kitchen_schedule").Attrs(models.Setting{Value: `{"monday":[],"tuesday":[],"wednesday":[],"thursday":[],"friday":[],"saturday":[],"sunday":[]}`}).FirstOrCreate(&kitchenScheduleSet)
 
-	var kitchenClosingTime models.Setting
-	database.DB.Where("key = ?", "kitchen_closing_time").Attrs(models.Setting{Value: "23:00"}).FirstOrCreate(&kitchenClosingTime)
+	loc, _ := time.LoadLocation("Europe/Rome")
+	nowT := time.Now().In(loc)
+	nowH := nowT.Format("15:04")
+	currentDay := strings.ToLower(nowT.Weekday().String())
+
+	var venueSchedule WeeklySchedule
+	json.Unmarshal([]byte(venueScheduleSet.Value), &venueSchedule)
+
+	var kitchenSchedule WeeklySchedule
+	json.Unmarshal([]byte(kitchenScheduleSet.Value), &kitchenSchedule)
+
+	venueDaySlots := venueSchedule[currentDay]
+	kitchenDaySlots := kitchenSchedule[currentDay]
+
+	isVenueOpenTime, opTime, clTime := getActiveOrUpcomingSlotInfo(nowH, venueDaySlots)
+	isKitchenOpenTime, kopTime, kclTime := getActiveOrUpcomingSlotInfo(nowH, kitchenDaySlots)
 
 	isOpen := false
 	isKitchenOpen := false
-	loc, _ := time.LoadLocation("Europe/Rome")
-	nowH := time.Now().In(loc).Format("15:04")
-	// Assicure padding zeri per il confronto (es. "9:00" -> "09:00")
-	padTime := func(t string) string {
-		if len(t) == 4 { // e.g. "9:00"
-			return "0" + t
-		}
-		return t
-	}
-
-	opTime := padTime(openingTime.Value)
-	clTime := padTime(closingTime.Value)
-	kopTime := padTime(kitchenOpeningTime.Value)
-	kclTime := padTime(kitchenClosingTime.Value)
 
 	if forcedStatus.Value == "open" {
 		isOpen = true
 	} else if forcedStatus.Value == "closed" {
 		isOpen = false
 	} else {
-		// Logica auto
-		if opTime > clTime {
-			if nowH >= opTime || nowH < clTime {
-				isOpen = true
-			}
-		} else {
-			if nowH >= opTime && nowH < clTime {
-				isOpen = true
-			}
-		}
+		isOpen = isVenueOpenTime
 	}
 
 	if forcedKitchenStatus.Value == "open" {
@@ -75,16 +127,7 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 	} else if forcedKitchenStatus.Value == "closed" {
 		isKitchenOpen = false
 	} else {
-		// Logica auto
-		if kopTime > kclTime {
-			if nowH >= kopTime || nowH < kclTime {
-				isKitchenOpen = true
-			}
-		} else {
-			if nowH >= kopTime && nowH < kclTime {
-				isKitchenOpen = true
-			}
-		}
+		isKitchenOpen = isKitchenOpenTime
 	}
 
 	// Recuperiamo gli eventi
@@ -127,11 +170,11 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 
 	return &models.HomeData{
 		IsOpen:             isOpen,
-		OpeningTime:        openingTime.Value,
-		ClosingTime:        closingTime.Value,
+		OpeningTime:        opTime,
+		ClosingTime:        clTime,
 		IsKitchenOpen:      isKitchenOpen,
-		KitchenOpeningTime: kitchenOpeningTime.Value,
-		KitchenClosingTime: kitchenClosingTime.Value,
+		KitchenOpeningTime: kopTime,
+		KitchenClosingTime: kclTime,
 		LocationName:       "Via Luigi Einaudi, 18",
 		NextEvent:          nextEventTitle,
 		Events:             homeEvents,

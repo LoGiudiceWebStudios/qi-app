@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -27,7 +28,7 @@ func NewMenuHandler() *MenuHandler {
 
 func (h *MenuHandler) ListCategoriesAPI(c *gin.Context) {
 	var categories []models.Category
-	if err := database.DB.Find(&categories).Error; err != nil {
+	if err := database.DB.Order("ordine asc, id asc").Find(&categories).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossibile recuperare le categorie"})
 		return
 	}
@@ -51,7 +52,7 @@ func (h *MenuHandler) GetCategoryProductsAPI(c *gin.Context) {
 func (h *MenuHandler) RenderMenu(c *gin.Context) {
 	var categories []models.Category
 	// Preload the related products for the view
-	database.DB.Preload("Products").Find(&categories)
+	database.DB.Preload("Products").Order("ordine asc, id asc").Find(&categories)
 
 	c.HTML(http.StatusOK, "menu.html", gin.H{
 		"Title":      "Gestione Menu",
@@ -62,6 +63,8 @@ func (h *MenuHandler) RenderMenu(c *gin.Context) {
 func (h *MenuHandler) CreateCategory(c *gin.Context) {
 	name := c.PostForm("name")
 	desc := c.PostForm("description")
+	ordineStr := c.PostForm("ordine")
+	ordine, _ := strconv.Atoi(ordineStr)
 
 	if name == "" {
 		c.String(http.StatusBadRequest, "Il nome della categoria è obbligatorio")
@@ -83,6 +86,7 @@ func (h *MenuHandler) CreateCategory(c *gin.Context) {
 		Name:        name,
 		Description: desc,
 		ImageURL:    imageURL,
+		Ordine:      ordine,
 	}
 
 	if err := database.DB.Create(&category).Error; err != nil {
@@ -173,5 +177,117 @@ func (h *MenuHandler) DeleteProduct(c *gin.Context) {
 		c.String(http.StatusInternalServerError, "Errore l'eliminazione")
 		return
 	}
+	c.Redirect(http.StatusSeeOther, "/admin/menu")
+}
+
+func (h *MenuHandler) EditCategory(c *gin.Context) {
+	id := c.Param("id")
+	var category models.Category
+	if err := database.DB.First(&category, id).Error; err != nil {
+		c.String(http.StatusNotFound, "Categoria non trovata")
+		return
+	}
+
+	c.HTML(http.StatusOK, "menu_category_edit.html", gin.H{
+		"Title":    "Modifica Categoria",
+		"Category": category,
+	})
+}
+
+func (h *MenuHandler) UpdateCategory(c *gin.Context) {
+	id := c.Param("id")
+	var category models.Category
+	if err := database.DB.First(&category, id).Error; err != nil {
+		c.String(http.StatusNotFound, "Categoria non trovata")
+		return
+	}
+
+	category.Name = c.PostForm("name")
+	category.Description = c.PostForm("description")
+	ordineStr := c.PostForm("ordine")
+	ordine, _ := strconv.Atoi(ordineStr)
+	category.Ordine = ordine
+
+	file, err := c.FormFile("immagine")
+	if err == nil {
+		os.MkdirAll("uploads/categories", os.ModePerm)
+		filename := fmt.Sprintf("%d_%s", time.Now().Unix(), filepath.Base(file.Filename))
+		outPath := fmt.Sprintf("uploads/categories/%s", filename)
+		if finalPath, err := services.CompressAndSaveImage(file, outPath); err == nil {
+			category.ImageURL = "/" + finalPath
+		}
+	}
+
+	database.DB.Save(&category)
+	c.Redirect(http.StatusSeeOther, "/admin/menu")
+}
+
+func (h *MenuHandler) EditProduct(c *gin.Context) {
+	id := c.Param("id")
+	var product models.Product
+	if err := database.DB.First(&product, id).Error; err != nil {
+		c.String(http.StatusNotFound, "Prodotto non trovato")
+		return
+	}
+
+	var categories []models.Category
+	database.DB.Find(&categories)
+
+	c.HTML(http.StatusOK, "menu_product_edit.html", gin.H{
+		"Title":      "Modifica Prodotto",
+		"Product":    product,
+		"Categories": categories,
+	})
+}
+
+func (h *MenuHandler) UpdateProduct(c *gin.Context) {
+	id := c.Param("id")
+	var product models.Product
+	if err := database.DB.First(&product, id).Error; err != nil {
+		c.String(http.StatusNotFound, "Prodotto non trovato")
+		return
+	}
+
+	catIDStr := c.PostForm("category_id")
+	catID, _ := strconv.ParseUint(catIDStr, 10, 32)
+	product.CategoryID = uint(catID)
+	product.Name = c.PostForm("name")
+	product.ShortDesc = c.PostForm("short_desc")
+	product.Description = c.PostForm("description")
+	if p, err := strconv.ParseFloat(c.PostForm("price"), 64); err == nil {
+		product.Price = p
+	}
+
+	file3d, err3d := c.FormFile("modello_3d")
+	if err3d == nil {
+		os.MkdirAll("uploads/models3d", os.ModePerm)
+		filename3d := fmt.Sprintf("%d_%s", time.Now().Unix(), filepath.Base(file3d.Filename))
+		filepath3d := fmt.Sprintf("uploads/models3d/%s", filename3d)
+		if err := c.SaveUploadedFile(file3d, filepath3d); err == nil {
+			product.Model3dUrl = "/" + filepath3d
+		}
+	}
+
+	file3dIos, err3dIos := c.FormFile("modello_3d_ios")
+	if err3dIos == nil {
+		os.MkdirAll("uploads/models3d", os.ModePerm)
+		filename3dIos := fmt.Sprintf("%d_ios_%s", time.Now().Unix(), filepath.Base(file3dIos.Filename))
+		filepath3dIos := fmt.Sprintf("uploads/models3d/%s", filename3dIos)
+		if err := c.SaveUploadedFile(file3dIos, filepath3dIos); err == nil {
+			product.Model3DIosUrl = "/" + filepath3dIos
+		}
+	}
+
+	file, err := c.FormFile("immagine")
+	if err == nil {
+		os.MkdirAll("uploads/products", os.ModePerm)
+		filename := fmt.Sprintf("%d_%s", time.Now().Unix(), filepath.Base(file.Filename))
+		outPath := fmt.Sprintf("uploads/products/%s", filename)
+		if finalPath, err := services.CompressAndSaveImage(file, outPath); err == nil {
+			product.ImageURL = "/" + finalPath
+		}
+	}
+
+	database.DB.Save(&product)
 	c.Redirect(http.StatusSeeOther, "/admin/menu")
 }

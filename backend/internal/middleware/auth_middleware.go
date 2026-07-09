@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"os"
@@ -21,6 +22,43 @@ func getJWTSecret() []byte {
 		secret = "d8f9e0a2b4c6d8e0f1a3b5c7d9e1f3a5b7c9d1e3f5a7b9c1d3e5f7a9b1c3d5e7"
 	}
 	return []byte(secret)
+}
+
+func getCurrentAuthVersion() int {
+	var setting models.Setting
+	if err := database.DB.Where("key = ?", "auth_version").First(&setting).Error; err != nil {
+		database.DB.Create(&models.Setting{Key: "auth_version", Value: "1"})
+		return 1
+	}
+
+	version, err := strconv.Atoi(setting.Value)
+	if err != nil || version < 1 {
+		return 1
+	}
+
+	return version
+}
+
+func extractTokenVersion(token jwt.Token) int {
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return 0
+	}
+
+	if rawVersion, exists := claims["ver"]; exists {
+		switch value := rawVersion.(type) {
+		case float64:
+			return int(value)
+		case int:
+			return value
+		case string:
+			if parsed, err := strconv.Atoi(value); err == nil {
+				return parsed
+			}
+		}
+	}
+
+	return 0
 }
 
 func JWTAuth() gin.HandlerFunc {
@@ -43,6 +81,12 @@ func JWTAuth() gin.HandlerFunc {
 
 		if err != nil || !token.Valid {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token scaduto o non valido"})
+			c.Abort()
+			return
+		}
+
+		if extractTokenVersion(*token) != getCurrentAuthVersion() {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Sessione scaduta, effettua di nuovo il login"})
 			c.Abort()
 			return
 		}
@@ -71,6 +115,13 @@ func AdminAuthCookie() gin.HandlerFunc {
 
 		if err != nil || !token.Valid {
 			log.Println("AdminAuthCookie Fail: token invalid:", err)
+			c.Redirect(http.StatusSeeOther, "/admin/login")
+			c.Abort()
+			return
+		}
+
+		if extractTokenVersion(*token) != getCurrentAuthVersion() {
+			log.Println("AdminAuthCookie Fail: auth version mismatch")
 			c.Redirect(http.StatusSeeOther, "/admin/login")
 			c.Abort()
 			return

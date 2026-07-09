@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'core/theme/app_theme.dart';
+import 'core/services/app_navigator.dart';
 import 'presentation/pages/home_page.dart';
 import 'core/services/notification_service.dart';
 import 'presentation/pages/splash_screen.dart';
@@ -30,6 +31,7 @@ class QiApp extends StatelessWidget {
       title: 'QI App',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
+      navigatorKey: appNavigatorKey,
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'secure_storage_service.dart';
+import '../../core/services/app_navigator.dart';
 
 class ApiService {
   static String get serverUrl {
@@ -26,7 +27,11 @@ class ApiService {
           }
           return handler.next(options);
         },
-        onError: (error, handler) {
+        onError: (error, handler) async {
+          if (error.response?.statusCode == 401) {
+            await SecureStorageService.deleteToken();
+            appNavigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
+          }
            return handler.next(error); 
         }
       ),

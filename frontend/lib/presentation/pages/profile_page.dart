@@ -66,14 +66,7 @@ class _ProfilePageState extends State<ProfilePage> {
             appBar: AppBar(
               backgroundColor: Colors.transparent,
               elevation: 0,
-              leading: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back,
-                  color: Colors.white,
-                  size: 36,
-                ),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
+              automaticallyImplyLeading: false,
               title: const Text(
                 'Account Settings',
                 style: TextStyle(
@@ -136,17 +129,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ],
                         ),
-                        const Text(
-                          "Edit",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontFamily: 'Open Sauce',
-                            fontWeight: FontWeight.w500,
-                            decoration: TextDecoration.underline,
-                            decorationColor: Colors.white,
-                          ),
-                        ),
+                        const SizedBox.shrink(),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -190,17 +173,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ],
                         ),
-                        const Text(
-                          "Edit",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontFamily: 'Open Sauce',
-                            fontWeight: FontWeight.w500,
-                            decoration: TextDecoration.underline,
-                            decorationColor: Colors.white,
-                          ),
-                        ),
+                        const SizedBox.shrink(),
                       ],
                     ),
                     const SizedBox(height: 10),

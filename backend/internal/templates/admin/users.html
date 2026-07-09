@@ -10,6 +10,7 @@
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cognome</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefono</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Punti</th>
             </tr>
         </thead>
@@ -20,11 +21,12 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ .Nome }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ .Cognome }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ .Email }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ .Telefono }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">{{ .Punti }}</td>
             </tr>
             {{ else }}
             <tr>
-                <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">Nessun utente trovato.</td>
+                <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">Nessun utente trovato.</td>
             </tr>
             {{ end }}
         </tbody>

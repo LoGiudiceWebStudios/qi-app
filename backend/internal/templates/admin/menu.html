@@ -3,22 +3,24 @@
 <div class="space-y-8">
     <!-- Categorie Section -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div class="px-6 py-4 border-b border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h2 class="text-xl font-bold text-gray-800">Categorie</h2>
+            <button type="button" onclick="cancelCatEdit()" id="btn-cancel-cat" class="hidden text-sm text-gray-500 hover:text-gray-800">Annulla Modifica</button>
         </div>
         <div class="p-6">
-            <form action="/admin/menu/categories" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <input type="text" name="name" placeholder="Nome Categoria (es: Panini)" class="border rounded-md px-3 py-2" required>
-                <input type="text" name="description" placeholder="Sottotitolo (es: 12 varianti)" class="border rounded-md px-3 py-2">
+            <form id="form-category" action="/admin/menu/categories" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                <input type="text" id="cat-name" name="name" placeholder="Nome Categoria (es: Panini)" class="border rounded-md px-3 py-2" required>
+                <input type="text" id="cat-desc" name="description" placeholder="Sottotitolo (es: 12 varianti)" class="border rounded-md px-3 py-2">
+                <input type="number" id="cat-ordine" name="ordine" placeholder="Ordine (es: 1)" class="border rounded-md px-3 py-2 w-24">
                 <input type="file" name="immagine" accept="image/*" class="border rounded-md px-3 py-2 bg-white">
-                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium transition-colors w-full">Aggiungi Categoria</button>
+                <button type="submit" id="btn-cat-submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium transition-colors w-full">Aggiungi Categoria</button>
             </form>
             
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-gray-50 border-b border-gray-200 text-sm text-gray-500 uppercase tracking-wider">
                         <th class="px-6 py-3 font-medium w-16">Foto</th>
-                        <th class="px-6 py-3 font-medium">ID</th>
+                        <th class="px-6 py-3 font-medium">Ordine</th>
                         <th class="px-6 py-3 font-medium">Nome Categoria</th>
                         <th class="px-6 py-3 font-medium">Sottotitolo</th><th class="px-6 py-3 font-medium text-right">Azioni</th></tr></thead><tbody class="divide-y divide-gray-200">
                     {{ range .Categories }}
@@ -30,9 +32,9 @@
                                 <div class="w-12 h-12 rounded bg-gray-200 border flex items-center justify-center text-xs text-gray-400">N/D</div>
                             {{ end }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ .ID }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ .Name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ .Description }}</td><td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><form action="/admin/menu/categories/{{ .ID }}/delete" method="POST" class="inline" onsubmit="return confirm('Sei sicuro di voler eliminare questa categoria? Tutti i prodotti associati diventeranno orfani o verranno eliminati (dipende dal database)');"><button type="submit" class="text-red-600 hover:text-red-900">Elimina</button></form></td></tr>{{ else }}
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ .Ordine }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ .Name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ .Description }}</td><td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><button type="button" onclick="editCategory('{{ .ID }}', '{{ .Name }}', '{{ .Description }}', '{{ .Ordine }}')" class="text-blue-600 hover:text-blue-900 mr-3">Modifica</button><form action="/admin/menu/categories/{{ .ID }}/delete" method="POST" class="inline" onsubmit="return confirm('Sei sicuro di voler eliminare questa categoria? Tutti i prodotti associati diventeranno orfani o verranno eliminati (dipende dal database)');"><button type="submit" class="text-red-600 hover:text-red-900">Elimina</button></form></td></tr>{{ else }}
                     <tr>
                         <td colspan="2" class="px-6 py-6 text-center text-gray-500">Nessuna categoria trovata. Inseriscine una!</td>
                     </tr>
@@ -44,30 +46,31 @@
 
     <!-- Prodotti Section -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div class="px-6 py-4 border-b border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h2 class="text-xl font-bold text-gray-800">Prodotti / Piatti</h2>
+            <button type="button" onclick="cancelProdEdit()" id="btn-cancel-prod" class="hidden text-sm text-gray-500 hover:text-gray-800">Annulla Modifica</button>
         </div>
         <div class="p-6">
-            <form action="/admin/menu/products" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <select name="category_id" class="border rounded-md px-3 py-2 bg-white h-11" required>
+            <form id="form-product" action="/admin/menu/products" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <select id="prod-cat" name="category_id" class="border rounded-md px-3 py-2 bg-white h-11" required>
                     <option value="">Seleziona Categoria...</option>
                     {{ range .Categories }}
                         <option value="{{ .ID }}">{{ .Name }}</option>
                     {{ end }}
                 </select>
                 <div class="flex gap-2">
-                    <input type="text" name="name" placeholder="Nome prodotto" class="w-full border rounded-md px-3 py-2 h-11" required>
-                    <input type="number" step="0.01" name="price" placeholder="Prezzo (€)" class="w-32 border rounded-md px-3 py-2 h-11" required>
+                    <input type="text" id="prod-name" name="name" placeholder="Nome prodotto" class="w-full border rounded-md px-3 py-2 h-11" required>
+                    <input type="number" id="prod-price" step="0.01" name="price" placeholder="Prezzo (€)" class="w-32 border rounded-md px-3 py-2 h-11" required>
                 </div>
                 
-                <input type="text" name="short_desc" placeholder="Descrizione breve / Etichetta" class="col-span-1 border rounded-md px-3 py-2 h-11">
+                <input type="text" id="prod-sdesc" name="short_desc" placeholder="Descrizione breve / Etichetta" class="col-span-1 border rounded-md px-3 py-2 h-11">
                 <input type="file" name="immagine" accept="image/*" class="col-span-1 border rounded-md px-3 py-2 h-11 bg-white">
                 <label class="col-span-1 border rounded-md px-3 py-2 h-11 bg-white text-gray-500 text-sm flex items-center gap-2">Modello 3D Android (.glb): <input type="file" name="modello_3d" accept=".glb,.gltf"></label>
                 <label class="col-span-1 border rounded-md px-3 py-2 h-11 bg-white text-gray-500 text-sm flex items-center gap-2">Modello 3D iOS (.usdz): <input type="file" name="modello_3d_ios" accept=".usdz"></label>
-                <textarea name="description" placeholder="Descrizione lunga (ingredienti, dettagli, allergeni)" rows="3" class="col-span-1 md:col-span-2 border rounded-md px-3 py-2 text-sm"></textarea>
+                <textarea id="prod-desc" name="description" placeholder="Descrizione lunga (ingredienti, dettagli, allergeni)" rows="3" class="col-span-1 md:col-span-2 border rounded-md px-3 py-2 text-sm"></textarea>
                 
                 <div class="col-span-1 md:col-span-2 flex justify-end">
-                    <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-8 py-2 rounded-md font-medium transition-colors">Aggiungi Prodotto</button>
+                    <button type="submit" id="btn-prod-submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-8 py-2 rounded-md font-medium transition-colors">Aggiungi Prodotto</button>
                 </div>
             </form>
 
@@ -78,6 +81,7 @@
                         <th class="px-6 py-3 font-medium">Prezzo</th>
                         <th class="px-6 py-3 font-medium">Categoria</th><th class="px-6 py-3 font-medium text-right">Azioni</th></tr></thead><tbody class="divide-y divide-gray-200">
                     {{ range .Categories }}
+                        {{ $catID := .ID }}
                         {{ $catName := .Name }}
                         {{ range .Products }}
                         <tr class="hover:bg-gray-50">
@@ -86,13 +90,55 @@
                                 {{ if .Description }}<span class="text-xs text-gray-500">{{ .Description }}</span>{{ end }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">€ {{ .Price }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $catName }}</td><td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><form action="/admin/menu/products/{{ .ID }}/delete" method="POST" class="inline" onsubmit="return confirm('Sei sicuro di voler eliminare questo prodotto?');"><button type="submit" class="text-red-600 hover:text-red-900">Elimina</button></form></td></tr>{{ end }}
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $catName }}</td><td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><button type="button" onclick="editProduct('{{ .ID }}', '{{ $catID }}', '{{ .Name }}', '{{ .Price }}', '{{ .ShortDesc }}', '{{ .Description }}')" class="text-blue-600 hover:text-blue-900 mr-3">Modifica</button><form action="/admin/menu/products/{{ .ID }}/delete" method="POST" class="inline" onsubmit="return confirm('Sei sicuro di voler eliminare questo prodotto?');"><button type="submit" class="text-red-600 hover:text-red-900">Elimina</button></form></td></tr>{{ end }}
                     {{ end }}
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
+<script>
+function editCategory(id, name, desc, ordine) {
+    document.getElementById('form-category').action = "/admin/menu/categories/" + id + "/edit";
+    document.getElementById('cat-name').value = name;
+    document.getElementById('cat-desc').value = desc;
+    document.getElementById('cat-ordine').value = ordine;
+    document.getElementById('btn-cat-submit').innerText = "Salva Categoria";
+    document.getElementById('btn-cancel-cat').classList.remove('hidden');
+    document.getElementById('form-category').scrollIntoView({behavior: "smooth"});
+}
+function cancelCatEdit() {
+    document.getElementById('form-category').action = "/admin/menu/categories";
+    document.getElementById('cat-name').value = "";
+    document.getElementById('cat-desc').value = "";
+    document.getElementById('cat-ordine').value = "";
+    document.getElementById('btn-cat-submit').innerText = "Aggiungi Categoria";
+    document.getElementById('btn-cancel-cat').classList.add('hidden');
+}
+
+function editProduct(id, catId, name, price, shortDesc, desc) {
+    document.getElementById('form-product').action = "/admin/menu/products/" + id + "/edit";
+    document.getElementById('prod-cat').value = catId;
+    document.getElementById('prod-name').value = name;
+    document.getElementById('prod-price').value = price;
+    document.getElementById('prod-sdesc').value = shortDesc;
+    document.getElementById('prod-desc').value = desc;
+    document.getElementById('btn-prod-submit').innerText = "Salva Prodotto";
+    document.getElementById('btn-cancel-prod').classList.remove('hidden');
+    document.getElementById('form-product').scrollIntoView({behavior: "smooth"});
+}
+function cancelProdEdit() {
+    document.getElementById('form-product').action = "/admin/menu/products";
+    document.getElementById('prod-cat').value = "";
+    document.getElementById('prod-name').value = "";
+    document.getElementById('prod-price').value = "";
+    document.getElementById('prod-sdesc').value = "";
+    document.getElementById('prod-desc').value = "";
+    document.getElementById('btn-prod-submit').innerText = "Aggiungi Prodotto";
+    document.getElementById('btn-cancel-prod').classList.add('hidden');
+}
+</script>
 
 {{ template "layout_bottom" . }}
 

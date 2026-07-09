@@ -107,6 +107,60 @@ func (h *EventsHandler) CreateEvent(c *gin.Context) {
 	c.String(http.StatusInternalServerError, "Errore salvataggio evento")
 }
 
+func (h *EventsHandler) RenderEditEvent(c *gin.Context) {
+	id := c.Param("id")
+	var event models.Event
+	if err := database.DB.First(&event, id).Error; err != nil {
+		c.String(http.StatusNotFound, "Evento non trovato")
+		return
+	}
+
+	data := gin.H{
+		"Title": "Modifica Evento",
+		"Event": event,
+	}
+	c.HTML(http.StatusOK, "event_edit.html", data)
+}
+
+func (h *EventsHandler) UpdateEvent(c *gin.Context) {
+	id := c.Param("id")
+	var evento models.Event
+	if err := database.DB.First(&evento, id).Error; err != nil {
+		c.String(http.StatusNotFound, "Evento non trovato")
+		return
+	}
+
+	evento.Titolo = c.PostForm("titolo")
+	evento.Descrizione = c.PostForm("descrizione")
+
+	if dataEventoStr := c.PostForm("data_evento"); dataEventoStr != "" {
+		if dataEvento, err := time.Parse("2006-01-02", dataEventoStr); err == nil {
+			evento.DataEvento = dataEvento
+		}
+	}
+	evento.Ora = c.PostForm("ora_evento")
+	evento.Luogo = c.PostForm("luogo")
+
+	file, err := c.FormFile("immagine")
+	if err == nil {
+		os.MkdirAll("uploads/events", os.ModePerm)
+		filename := fmt.Sprintf("%d_%s", time.Now().Unix(), filepath.Base(file.Filename))
+		outPath := filepath.Join("uploads/events", filename)
+
+		if finalPath, err := services.CompressAndSaveImage(file, outPath); err == nil {
+			imageFinalUrl := filepath.ToSlash(finalPath)
+			evento.ImmagineURL = "/" + imageFinalUrl
+		}
+	}
+
+	if err := database.DB.Save(&evento).Error; err != nil {
+		c.String(http.StatusInternalServerError, "Errore salvataggio evento")
+		return
+	}
+
+	c.Redirect(http.StatusFound, "/admin/events")
+}
+
 func (h *EventsHandler) DeleteEvent(c *gin.Context) {
 	id := c.Param("id")
 	if err := database.DB.Delete(&models.Event{}, id).Error; err != nil {

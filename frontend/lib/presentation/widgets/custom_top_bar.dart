@@ -64,7 +64,15 @@ class CustomTopBar extends StatelessWidget {
         children: [
           leading ?? _buildDefaultIcon(),
           SizedBox(width: titleSpacing),
-          Text(title, style: resolvedTitleStyle),
+          Flexible(
+            child: Text(
+              title,
+              style: resolvedTitleStyle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.left,
+            ),
+          ),
         ],
       ),
     );

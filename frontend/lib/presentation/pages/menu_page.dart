@@ -131,15 +131,20 @@ class _MenuPageState extends State<MenuPage> {
                                     color: Colors.grey,
                                   ),
                                 const SizedBox(height: 12),
-                                Text(
-                                  category.name,
-                                  style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w800,
-                                    fontFamily: 'Open Sauce',
-                                    color: Color(0xFF1E293B),
+                                  Text(
+                                    category.name,
+                                    style: const TextStyle(
+                                      fontSize: 19,
+                                      fontWeight: FontWeight.w800,
+                                      fontFamily: 'Open Sauce',
+                                      color: Color(0xFF1E293B),
+                                      height: 1.05,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    softWrap: true,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
                                 const SizedBox(height: 4),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(

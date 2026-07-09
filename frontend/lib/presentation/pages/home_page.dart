@@ -187,39 +187,6 @@ class _HomePageState extends ConsumerState<HomePage> {
 
           const SizedBox(height: 36),
 
-          // EVENTI COLLEGATI AL BACKEND
-          if (homeData.events.isEmpty)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.0),
-                child: Text(
-                  'Nessun evento in programma',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ),
-            )
-          else
-            _buildHorizontalSection(
-              title: 'Eventi',
-              actionText: 'Vedi tutto',
-              actionColor: greenColor,
-              itemsCount: homeData.events.length,
-              itemBuilder: (context, index) {
-                final event = homeData.events[index];
-                return CustomCardWidget(
-                  borderColor: greenColor,
-                  imageUrl:
-                      (event.imageUrl.isNotEmpty)
-                          ? (event.imageUrl.startsWith('http') 
-                              ? event.imageUrl 
-                              : "${ApiService.serverUrl}${event.imageUrl.startsWith('/') ? '' : '/'}${event.imageUrl.replaceAll('\\', '/')}")
-                          : null,
-                );
-              },
-            ),
-
-          const SizedBox(height: 36),
-
           // OFFERTE
           if (homeData.offers.isEmpty)
             const Center(
@@ -246,6 +213,39 @@ class _HomePageState extends ConsumerState<HomePage> {
                           ? (offer.imageUrl.startsWith('http')
                               ? offer.imageUrl
                               : "${ApiService.serverUrl}${offer.imageUrl.startsWith('/') ? '' : '/'}${offer.imageUrl.replaceAll('\\', '/')}")
+                          : null,
+                );
+              },
+            ),
+
+          const SizedBox(height: 36),
+
+          // EVENTI COLLEGATI AL BACKEND
+          if (homeData.events.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24.0),
+                child: Text(
+                  'Nessun evento in programma',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            )
+          else
+            _buildHorizontalSection(
+              title: 'Eventi',
+              actionText: 'Vedi tutto',
+              actionColor: greenColor,
+              itemsCount: homeData.events.length,
+              itemBuilder: (context, index) {
+                final event = homeData.events[index];
+                return CustomCardWidget(
+                  borderColor: greenColor,
+                  imageUrl:
+                      (event.imageUrl.isNotEmpty)
+                          ? (event.imageUrl.startsWith('http')
+                              ? event.imageUrl
+                              : "${ApiService.serverUrl}${event.imageUrl.startsWith('/') ? '' : '/'}${event.imageUrl.replaceAll('\\', '/')}")
                           : null,
                 );
               },

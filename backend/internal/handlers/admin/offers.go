@@ -132,3 +132,65 @@ func (h *OffersHandler) Delete(c *gin.Context) {
 	}
 	c.Redirect(http.StatusSeeOther, "/admin/offers")
 }
+
+func (h *OffersHandler) EditGet(c *gin.Context) {
+	id := c.Param("id")
+	var offer models.Offer
+	if err := database.DB.First(&offer, id).Error; err != nil {
+		c.String(http.StatusNotFound, "Offerta non trovata")
+		return
+	}
+
+	c.HTML(http.StatusOK, "offer_edit.html", gin.H{
+		"Title": "Modifica Offerta",
+		"Offer": offer,
+	})
+}
+
+func (h *OffersHandler) UpdatePost(c *gin.Context) {
+	id := c.Param("id")
+	var offer models.Offer
+	if err := database.DB.First(&offer, id).Error; err != nil {
+		c.String(http.StatusNotFound, "Offerta non trovata")
+		return
+	}
+
+	offer.Titolo = c.PostForm("titolo")
+	offer.Descrizione = c.PostForm("descrizione")
+	offer.CodiceSconto = c.PostForm("codice_sconto")
+
+	layout := "2006-01-02"
+	loc, _ := time.LoadLocation("Local")
+
+	if validaDalStr := c.PostForm("valida_dal"); validaDalStr != "" {
+		if validaDal, err := time.ParseInLocation(layout, validaDalStr, loc); err == nil {
+			offer.ValidaDal = validaDal
+		}
+	}
+
+	if validaFinoStr := c.PostForm("valida_fino"); validaFinoStr != "" {
+		if validaFino, err := time.ParseInLocation(layout, validaFinoStr, loc); err == nil {
+			offer.ValidaFino = validaFino.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+		}
+	}
+
+	file, _ := c.FormFile("immagine")
+	if file != nil {
+		ext := filepath.Ext(file.Filename)
+		filename := fmt.Sprintf("%d%s", time.Now().Unix(), ext)
+		uploadDir := "uploads/offers"
+		os.MkdirAll(uploadDir, 0755)
+
+		dst := filepath.Join(uploadDir, filename)
+		if finalPath, err := services.CompressAndSaveImage(file, dst); err == nil {
+			offer.ImmagineURL = "/" + filepath.ToSlash(finalPath)
+		}
+	}
+
+	if err := database.DB.Save(&offer).Error; err != nil {
+		c.String(http.StatusInternalServerError, "Errore salvataggio offerta")
+		return
+	}
+
+	c.Redirect(http.StatusSeeOther, "/admin/offers")
+}

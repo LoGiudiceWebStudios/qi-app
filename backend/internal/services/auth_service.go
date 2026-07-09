@@ -26,6 +26,21 @@ func NewAuthService() *AuthService {
 	return &AuthService{}
 }
 
+func getCurrentAuthVersion() int {
+	var setting models.Setting
+	if err := database.DB.Where("key = ?", "auth_version").First(&setting).Error; err != nil {
+		database.DB.Create(&models.Setting{Key: "auth_version", Value: "1"})
+		return 1
+	}
+
+	version, err := strconv.Atoi(setting.Value)
+	if err != nil || version < 1 {
+		return 1
+	}
+
+	return version
+}
+
 // GenerateJWT crea un token con l'ID dell'utente che scade dopo 365 giorni
 func (s *AuthService) GenerateJWT(userID uint) (string, error) {
 	secret := os.Getenv("JWT_SECRET")
@@ -37,6 +52,7 @@ func (s *AuthService) GenerateJWT(userID uint) (string, error) {
 		"sub": userID,
 		"exp": time.Now().Add(time.Hour * 24 * 365).Unix(),
 		"iat": time.Now().Unix(),
+		"ver": getCurrentAuthVersion(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

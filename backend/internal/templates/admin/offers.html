@@ -37,6 +37,7 @@
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-600">{{ .CodiceSconto }}</td>
                     <td class="px-6 py-4 text-right text-sm">
+                        <a href="/admin/offers/{{ .ID }}/edit" class="text-blue-500 hover:text-blue-700 font-medium">Modifica</a>
                         <form method="POST" action="/admin/offers/{{ .ID }}/delete" onsubmit="return confirm('Sicuro di voler eliminare questa offerta?');" class="inline">
                             <button type="submit" class="text-red-500 hover:text-red-700 font-medium ml-4">Elimina</button>
                         </form>
