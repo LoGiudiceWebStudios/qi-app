@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"qi-backend/internal/database"
 	"qi-backend/internal/models"
@@ -47,10 +48,23 @@ func (h *DashboardHandler) RenderDashboard(c *gin.Context) {
 		authVersion.Value = "1"
 	}
 
+	now := time.Now()
+	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+
+	var totalEvents int64
+	if err := database.DB.Model(&models.Event{}).Where("data_evento >= ?", startOfToday).Count(&totalEvents).Error; err != nil {
+		log.Printf("Errore conteggio eventi attivi: %v", err)
+	}
+
+	var totalOffers int64
+	if err := database.DB.Model(&models.Offer{}).Where("valida_dal <= ? AND valida_fino >= ?", now, startOfToday).Count(&totalOffers).Error; err != nil {
+		log.Printf("Errore conteggio offerte attive: %v", err)
+	}
+
 	data := gin.H{
 		"Title":               "Dashboard Qi App",
-		"TotalEvents":         14,
-		"TotalOffers":         5,
+		"TotalEvents":         totalEvents,
+		"TotalOffers":         totalOffers,
 		"ForcedStatus":        forcedStatus.Value,
 		"VenueSchedule":       venueSchedule.Value,
 		"ForcedKitchenStatus": forcedKitchenStatus.Value,

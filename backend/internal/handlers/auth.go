@@ -122,14 +122,25 @@ func (h *AuthHandler) UpdateFCMToken(c *gin.Context) {
 		return
 	}
 
-	userID, exists := c.Get("userID")
+	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Non autorizzato"})
 		return
 	}
 
+	var uid uint
+	switch v := userID.(type) {
+	case float64:
+		uid = uint(v)
+	case uint:
+		uid = v
+	default:
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Non autorizzato"})
+		return
+	}
+
 	var user models.User
-	if err := database.DB.First(&user, userID).Error; err != nil {
+	if err := database.DB.First(&user, uid).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"success": false, "message": "Utente non trovato"})
 		return
 	}
