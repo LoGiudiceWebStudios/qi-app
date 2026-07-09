@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import '../../data/services/api_service.dart';
+import '../../data/services/secure_storage_service.dart';
 
 class NotificationService {
   static final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -29,7 +30,7 @@ class NotificationService {
          _syncFCMToken(newToken);
       });
 
-      // Gestisce le notifiche quando l'app è in foreground
+      // Gestisce le notifiche quando l'app ï¿½ in foreground
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         debugPrint('Notifica in foreground ricevuta: ${message.notification?.title}');
       });
@@ -41,6 +42,12 @@ class NotificationService {
 
   static Future<void> _syncFCMToken(String token) async {
     try {
+      final jwt = await SecureStorageService.getToken();
+      if (jwt == null || jwt.isEmpty) {
+        debugPrint('Sync FCM saltata: utente non autenticato.');
+        return;
+      }
+
       await ApiService.dio.post(
         '/auth/fcm_token',
         data: {'fcm_token': token},
