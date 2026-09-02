@@ -14,6 +14,7 @@ import (
 	"qi-backend/internal/services"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type MenuHandler struct{}
@@ -38,7 +39,7 @@ func (h *MenuHandler) ListCategoriesAPI(c *gin.Context) {
 func (h *MenuHandler) GetCategoryProductsAPI(c *gin.Context) {
 	catID := c.Param("id")
 	var products []models.Product
-	if err := database.DB.Where("category_id = ?", catID).Find(&products).Error; err != nil {
+	if err := database.DB.Where("category_id = ?", catID).Order("ordine asc, id asc").Find(&products).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossibile recuperare i prodotti"})
 		return
 	}
@@ -52,7 +53,9 @@ func (h *MenuHandler) GetCategoryProductsAPI(c *gin.Context) {
 func (h *MenuHandler) RenderMenu(c *gin.Context) {
 	var categories []models.Category
 	// Preload the related products for the view
-	database.DB.Preload("Products").Order("ordine asc, id asc").Find(&categories)
+	database.DB.Preload("Products", func(db *gorm.DB) *gorm.DB {
+		return db.Order("ordine asc, id asc")
+	}).Order("ordine asc, id asc").Find(&categories)
 
 	c.HTML(http.StatusOK, "menu.html", gin.H{
 		"Title":      "Gestione Menu",
@@ -106,9 +109,11 @@ func (h *MenuHandler) CreateProduct(c *gin.Context) {
 	shortDesc := c.PostForm("short_desc")
 	desc := c.PostForm("description")
 	priceStr := c.PostForm("price")
+	ordineStr := c.PostForm("ordine")
 
 	catID, _ := strconv.ParseUint(catIDStr, 10, 32)
 	price, _ := strconv.ParseFloat(priceStr, 64)
+	ordine, _ := strconv.Atoi(ordineStr)
 
 	var imageURL string
 	var modelURL string
@@ -153,6 +158,7 @@ func (h *MenuHandler) CreateProduct(c *gin.Context) {
 		ImageURL:      imageURL,
 		Model3dUrl:    modelURL,
 		Model3DIosUrl: modelIosURL,
+		Ordine:        ordine,
 	}
 
 	if err := database.DB.Create(&product).Error; err != nil {
@@ -254,6 +260,9 @@ func (h *MenuHandler) UpdateProduct(c *gin.Context) {
 	product.Name = c.PostForm("name")
 	product.ShortDesc = c.PostForm("short_desc")
 	product.Description = c.PostForm("description")
+	ordineStr := c.PostForm("ordine")
+	ordine, _ := strconv.Atoi(ordineStr)
+	product.Ordine = ordine
 	if p, err := strconv.ParseFloat(c.PostForm("price"), 64); err == nil {
 		product.Price = p
 	}

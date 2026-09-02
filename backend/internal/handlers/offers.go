@@ -23,18 +23,55 @@ func GetOffers(c *gin.Context) {
 		return
 	}
 
-	payload := make([]models.OfferAPI, 0, len(offers))
+	filteredOffers := make([]models.Offer, 0, len(offers))
 	for _, offer := range offers {
+		if offerIsActiveNow(offer, now) {
+			filteredOffers = append(filteredOffers, offer)
+		}
+	}
+
+	payload := make([]models.OfferAPI, 0, len(filteredOffers))
+	for _, offer := range filteredOffers {
 		imgURL := normalizeOfferImageURL(c, offer.ImmagineURL)
 		actionText := "Get Code"
 		if strings.TrimSpace(offer.CodiceSconto) == "" {
 			actionText = "Get Code"
 		}
-		terms := fmt.Sprintf("Offerta valida dal %s al %s. Verifica disponibilita in cassa prima dell'uso.", offer.ValidaDal.Format("02/01/2006"), offer.ValidaFino.Format("02/01/2006"))
+		terms := fmt.Sprintf("Offerta valida dal %s al %s.", offer.ValidaDal.Format("02/01/2006"), offer.ValidaFino.Format("02/01/2006"))
+		if strings.TrimSpace(offer.OraValidaDal) != "" && strings.TrimSpace(offer.OraValidaFino) != "" {
+			terms += fmt.Sprintf(" Attiva ogni giorno dalle %s alle %s.", offer.OraValidaDal, offer.OraValidaFino)
+		}
+		terms += " Verifica disponibilita in cassa prima dell'uso."
 		payload = append(payload, models.OfferAPI{ID: fmt.Sprintf("%d", offer.ID), ImageURL: imgURL, Title: offer.Titolo, Description: offer.Descrizione, TermsText: &terms, ActionText: actionText, Code: offer.CodiceSconto})
 	}
 
 	c.JSON(http.StatusOK, models.SuccessResponse("Offerte recuperate con successo", payload))
+}
+
+func offerIsActiveNow(offer models.Offer, now time.Time) bool {
+	if offer.RicorrenzaGiorno >= 0 && int(now.Weekday()) != offer.RicorrenzaGiorno {
+		return false
+	}
+
+	start, startErr := time.Parse("15:04", strings.TrimSpace(offer.OraValidaDal))
+	end, endErr := time.Parse("15:04", strings.TrimSpace(offer.OraValidaFino))
+	if startErr != nil || endErr != nil || (strings.TrimSpace(offer.OraValidaDal) == "" && strings.TrimSpace(offer.OraValidaFino) == "") {
+		return true
+	}
+
+	currentMinutes := now.Hour()*60 + now.Minute()
+	startMinutes := start.Hour()*60 + start.Minute()
+	endMinutes := end.Hour()*60 + end.Minute()
+
+	if startMinutes == endMinutes {
+		return true
+	}
+
+	if startMinutes < endMinutes {
+		return currentMinutes >= startMinutes && currentMinutes <= endMinutes
+	}
+
+	return currentMinutes >= startMinutes || currentMinutes <= endMinutes
 }
 
 func normalizeOfferImageURL(c *gin.Context, raw string) string {
@@ -66,6 +103,11 @@ func GenerateOfferCode(c *gin.Context) {
 	var offer models.Offer
 	if err := database.DB.First(&offer, offerID).Error; err != nil {
 		c.JSON(http.StatusNotFound, models.ErrorResponse("Offerta non trovata", "not_found"))
+		return
+	}
+
+	if !offerIsActiveNow(offer, time.Now()) {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse("Offerta non disponibile in questo orario", "offer_inactive"))
 		return
 	}
 
@@ -137,6 +179,11 @@ func ValidateOfferCode(c *gin.Context) {
 	var offerCode models.OfferCode
 	if err := database.DB.Where("code = ?", req.Code).Preload("Offer").First(&offerCode).Error; err != nil {
 		c.JSON(http.StatusNotFound, models.ErrorResponse("Codice non trovato", "not_found"))
+		return
+	}
+
+	if !offerIsActiveNow(offerCode.Offer, time.Now()) {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse("Offerta non disponibile in questo orario", "offer_inactive"))
 		return
 	}
 

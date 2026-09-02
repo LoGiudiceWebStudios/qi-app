@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -56,7 +57,11 @@ func (h *OffersHandler) CreatePost(c *gin.Context) {
 	descrizione := c.PostForm("descrizione")
 	validaDalStr := c.PostForm("valida_dal")
 	validaFinoStr := c.PostForm("valida_fino")
+	oraValidaDal := strings.TrimSpace(c.PostForm("ora_valida_dal"))
+	oraValidaFino := strings.TrimSpace(c.PostForm("ora_valida_fino"))
+	ricorrenzaGiorno, _ := strconv.Atoi(c.PostForm("ricorrenza_giorno"))
 	codiceSconto := c.PostForm("codice_sconto")
+	sendNotification := c.PostForm("send_notification") != ""
 
 	layout := "2006-01-02"
 	loc, _ := time.LoadLocation("Local")
@@ -100,12 +105,15 @@ func (h *OffersHandler) CreatePost(c *gin.Context) {
 	}
 
 	offer := models.Offer{
-		Titolo:       titolo,
-		Descrizione:  descrizione,
-		ImmagineURL:  imagePath,
-		ValidaDal:    validaDal,
-		ValidaFino:   validaFino,
-		CodiceSconto: codiceSconto,
+		Titolo:           titolo,
+		Descrizione:      descrizione,
+		ImmagineURL:      imagePath,
+		ValidaDal:        validaDal,
+		ValidaFino:       validaFino,
+		OraValidaDal:     oraValidaDal,
+		OraValidaFino:    oraValidaFino,
+		RicorrenzaGiorno: ricorrenzaGiorno,
+		CodiceSconto:     codiceSconto,
 	}
 
 	if err := database.DB.Create(&offer).Error; err != nil {
@@ -113,14 +121,16 @@ func (h *OffersHandler) CreatePost(c *gin.Context) {
 		return
 	}
 
-	// Invia notifica agli user
-	var users []models.User
-	database.DB.Where("fcm_token != ''").Find(&users)
-	var tokens []string
-	for _, u := range users {
-		tokens = append(tokens, u.FCMToken)
+	if sendNotification {
+		// Invia notifica agli user solo se richiesto nel form.
+		var users []models.User
+		database.DB.Where("fcm_token != ''").Find(&users)
+		var tokens []string
+		for _, u := range users {
+			tokens = append(tokens, u.FCMToken)
+		}
+		services.SendMulticastNotification("Nuova Offerta: "+titolo, "Approfitta della nuova offerta: "+descrizione, tokens)
 	}
-	services.SendMulticastNotification("Nuova Offerta: "+titolo, "Approfitta della nuova offerta: "+descrizione, tokens)
 	c.Redirect(http.StatusSeeOther, "/admin/offers")
 }
 
@@ -158,6 +168,11 @@ func (h *OffersHandler) UpdatePost(c *gin.Context) {
 	offer.Titolo = c.PostForm("titolo")
 	offer.Descrizione = c.PostForm("descrizione")
 	offer.CodiceSconto = c.PostForm("codice_sconto")
+	offer.OraValidaDal = strings.TrimSpace(c.PostForm("ora_valida_dal"))
+	offer.OraValidaFino = strings.TrimSpace(c.PostForm("ora_valida_fino"))
+	if value, err := strconv.Atoi(c.PostForm("ricorrenza_giorno")); err == nil {
+		offer.RicorrenzaGiorno = value
+	}
 
 	layout := "2006-01-02"
 	loc, _ := time.LoadLocation("Local")

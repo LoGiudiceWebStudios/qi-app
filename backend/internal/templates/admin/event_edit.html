@@ -23,7 +23,11 @@
                     <img src="{{.Event.ImmagineURL}}" alt="Immagine attuale" class="w-16 h-16 object-cover rounded shadow">
                 </div>
                 {{end}}
-                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="immagine" type="file" accept="image/*">
+                <div id="event-image-preview-wrap" class="mb-2 hidden">
+                    <img id="event-image-preview" alt="Anteprima nuova immagine" class="w-16 h-16 object-cover rounded shadow">
+                    <p id="event-image-filename" class="mt-1 text-xs text-gray-500"></p>
+                </div>
+                <input id="immagine" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="immagine" type="file" accept="image/*">
             </div>
         </div>
         
@@ -49,9 +53,54 @@
             <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="luogo" type="text" value="{{.Event.Luogo}}">
         </div>
 
+        <div>
+            <label class="block text-gray-700 text-sm font-bold mb-2">Ripeti ogni</label>
+            <select name="ricorrenza_giorno" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <option value="-1" {{if eq .Event.RicorrenzaGiorno -1}}selected{{end}}>Nessuna ricorrenza</option>
+                <option value="1" {{if eq .Event.RicorrenzaGiorno 1}}selected{{end}}>Lunedì</option>
+                <option value="2" {{if eq .Event.RicorrenzaGiorno 2}}selected{{end}}>Martedì</option>
+                <option value="3" {{if eq .Event.RicorrenzaGiorno 3}}selected{{end}}>Mercoledì</option>
+                <option value="4" {{if eq .Event.RicorrenzaGiorno 4}}selected{{end}}>Giovedì</option>
+                <option value="5" {{if eq .Event.RicorrenzaGiorno 5}}selected{{end}}>Venerdì</option>
+                <option value="6" {{if eq .Event.RicorrenzaGiorno 6}}selected{{end}}>Sabato</option>
+                <option value="0" {{if eq .Event.RicorrenzaGiorno 0}}selected{{end}}>Domenica</option>
+            </select>
+        </div>
+
         <div class="flex items-center justify-end mt-6 border-t pt-4">
             <a href="/admin/events" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded mr-2">Annulla</a>
             <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Salva Modifiche</button>
         </div>
     </form>
 </div>
+
+<script>
+(function () {
+    const input = document.getElementById('immagine');
+    const previewWrap = document.getElementById('event-image-preview-wrap');
+    const previewImage = document.getElementById('event-image-preview');
+    const fileName = document.getElementById('event-image-filename');
+
+    if (!input || !previewWrap || !previewImage || !fileName) return;
+
+    input.addEventListener('change', function () {
+        const file = this.files && this.files[0];
+        if (!file) {
+            previewWrap.classList.add('hidden');
+            previewImage.removeAttribute('src');
+            fileName.textContent = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            previewImage.src = e.target.result;
+            fileName.textContent = file.name;
+            previewWrap.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    });
+})();
+</script>
+
+{{ template "layout_bottom" . }}

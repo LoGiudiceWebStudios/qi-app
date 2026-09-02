@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -58,6 +59,8 @@ func (h *EventsHandler) CreateEvent(c *gin.Context) {
 	dataEventoStr := c.PostForm("data_evento")
 	oraEvento := c.PostForm("ora_evento")
 	luogo := c.PostForm("luogo")
+	ricorrenzaGiorno, _ := strconv.Atoi(c.PostForm("ricorrenza_giorno"))
+	sendNotification := c.PostForm("send_notification") != ""
 
 	dataEvento, _ := time.Parse("2006-01-02", dataEventoStr)
 
@@ -81,23 +84,26 @@ func (h *EventsHandler) CreateEvent(c *gin.Context) {
 	}
 
 	evento := models.Event{
-		Titolo:      titolo,
-		Descrizione: descrizione,
-		DataEvento:  dataEvento,
-		Ora:         oraEvento,
-		Luogo:       luogo,
-		ImmagineURL: immagineURL,
+		Titolo:           titolo,
+		Descrizione:      descrizione,
+		DataEvento:       dataEvento,
+		Ora:              oraEvento,
+		Luogo:            luogo,
+		ImmagineURL:      immagineURL,
+		RicorrenzaGiorno: ricorrenzaGiorno,
 	}
 
 	if err := database.DB.Create(&evento).Error; err == nil {
-		// Invia notifica agli user
-		var users []models.User
-		database.DB.Where("fcm_token != ''").Find(&users)
-		var tokens []string
-		for _, u := range users {
-			tokens = append(tokens, u.FCMToken)
+		if sendNotification {
+			// Invia notifica agli user solo se richiesto dal form.
+			var users []models.User
+			database.DB.Where("fcm_token != ''").Find(&users)
+			var tokens []string
+			for _, u := range users {
+				tokens = append(tokens, u.FCMToken)
+			}
+			services.SendMulticastNotification("Nuovo Evento: "+titolo, "Scopri il nuovo evento: "+titolo, tokens)
 		}
-		services.SendMulticastNotification("Nuovo Evento: "+titolo, "Scopri il nuovo evento: "+titolo, tokens)
 
 		c.Redirect(http.StatusFound, "/admin/events")
 		return
@@ -132,6 +138,9 @@ func (h *EventsHandler) UpdateEvent(c *gin.Context) {
 
 	evento.Titolo = c.PostForm("titolo")
 	evento.Descrizione = c.PostForm("descrizione")
+	if value, err := strconv.Atoi(c.PostForm("ricorrenza_giorno")); err == nil {
+		evento.RicorrenzaGiorno = value
+	}
 
 	if dataEventoStr := c.PostForm("data_evento"); dataEventoStr != "" {
 		if dataEvento, err := time.Parse("2006-01-02", dataEventoStr); err == nil {

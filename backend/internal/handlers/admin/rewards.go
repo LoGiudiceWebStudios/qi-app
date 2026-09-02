@@ -59,6 +59,7 @@ func (h *RewardsHandler) CreatePost(c *gin.Context) {
 	puntiRichiestiStr := c.PostForm("punti_richiesti")
 
 	punti, _ := strconv.Atoi(puntiRichiestiStr)
+	sendNotification := c.PostForm("send_notification") != ""
 
 	// Gestione salvataggio Immagine
 	var immagineURL string
@@ -111,15 +112,17 @@ func (h *RewardsHandler) CreatePost(c *gin.Context) {
 		return
 	}
 
-	// Invia notifica agli user
-	var users []models.User
-	database.DB.Where("fcm_token != ''").Find(&users)
-	var tokens []string
-	for _, u := range users {
-		tokens = append(tokens, u.FCMToken)
-	}
-	if len(tokens) > 0 {
-		services.SendMulticastNotification("Nuovo Premio Caricato!", "È disponibile un nuovo premio: "+titolo, tokens)
+	if sendNotification {
+		// Invia notifica agli user
+		var users []models.User
+		database.DB.Where("fcm_token != ''").Find(&users)
+		var tokens []string
+		for _, u := range users {
+			tokens = append(tokens, u.FCMToken)
+		}
+		if len(tokens) > 0 {
+			services.SendMulticastNotification("Nuovo Premio Caricato!", "È disponibile un nuovo premio: "+titolo, tokens)
+		}
 	}
 
 	c.Redirect(http.StatusSeeOther, "/admin/rewards")

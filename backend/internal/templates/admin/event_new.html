@@ -3,7 +3,7 @@
 <h1 class="text-3xl font-bold mb-6">Nuovo Evento</h1>
 
 <div class="bg-white rounded shadow-md w-full max-w-lg p-6">
-    <form action="/admin/events" method="POST" class="space-y-4">
+    <form action="/admin/events" method="POST" enctype="multipart/form-data" class="space-y-4">
         <div>
             <label class="block text-gray-700 text-sm font-bold mb-2" for="titolo">Titolo</label>
             <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="titolo" type="text" placeholder="Nome dell'evento" required>
@@ -29,6 +29,34 @@
             <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="luogo" type="text" placeholder="Es: Piazza Roma, Roma">
         </div>
 
+        <div>
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="ricorrenza_giorno">Ripeti ogni</label>
+            <select name="ricorrenza_giorno" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <option value="-1">Nessuna ricorrenza</option>
+                <option value="1">Lunedì</option>
+                <option value="2">Martedì</option>
+                <option value="3">Mercoledì</option>
+                <option value="4">Giovedì</option>
+                <option value="5">Venerdì</option>
+                <option value="6">Sabato</option>
+                <option value="0">Domenica</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="immagine">Immagine Copertina</label>
+            <div id="event-image-preview-wrap" class="mb-2 hidden">
+                <img id="event-image-preview" alt="Anteprima immagine" class="w-20 h-20 object-cover rounded shadow">
+                <p id="event-image-filename" class="mt-1 text-xs text-gray-500"></p>
+            </div>
+            <input id="immagine" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="immagine" type="file" accept="image/*">
+        </div>
+
+        <div class="flex items-center gap-2">
+            <input id="send_notification" type="checkbox" name="send_notification" checked class="h-4 w-4 text-blue-600 border-gray-300 rounded">
+            <label for="send_notification" class="text-sm font-medium text-gray-700">Invia notifica agli utenti</label>
+        </div>
+
         <div class="flex items-center justify-between pt-4 border-t border-gray-200">
             <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
                 Salva Evento
@@ -39,5 +67,34 @@
         </div>
     </form>
 </div>
+
+<script>
+(function () {
+    const input = document.getElementById('immagine');
+    const previewWrap = document.getElementById('event-image-preview-wrap');
+    const previewImage = document.getElementById('event-image-preview');
+    const fileName = document.getElementById('event-image-filename');
+
+    if (!input || !previewWrap || !previewImage || !fileName) return;
+
+    input.addEventListener('change', function () {
+        const file = this.files && this.files[0];
+        if (!file) {
+            previewWrap.classList.add('hidden');
+            previewImage.removeAttribute('src');
+            fileName.textContent = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            previewImage.src = e.target.result;
+            fileName.textContent = file.name;
+            previewWrap.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    });
+})();
+</script>
 
 {{ template "layout_bottom" . }}

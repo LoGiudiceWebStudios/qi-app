@@ -132,15 +132,21 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 
 	// Recuperiamo gli eventi
 	var events []models.Event
-	database.DB.Where("data_evento >= ?", time.Now().Add(-12*time.Hour)).Order("data_evento asc").Limit(3).Find(&events)
+	database.DB.Where("data_evento >= ?", time.Now().Add(-12*time.Hour)).Order("data_evento asc").Limit(20).Find(&events)
 	var homeEvents []models.HomeEvent
 	for _, e := range events {
+		if e.RicorrenzaGiorno >= 0 && int(nowT.Weekday()) != e.RicorrenzaGiorno {
+			continue
+		}
 		homeEvents = append(homeEvents, models.HomeEvent{
 			ID:       fmt.Sprint(e.ID),
 			Title:    e.Titolo,
 			ImageUrl: e.ImmagineURL,
 			Date:     e.DataEvento.Format("2006-01-02"),
 		})
+		if len(homeEvents) == 3 {
+			break
+		}
 	}
 	if len(homeEvents) == 0 {
 		homeEvents = []models.HomeEvent{}
@@ -150,14 +156,20 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 	var offers []models.Offer
 	nowOff := time.Now()
 	startOfDayOff := time.Date(nowOff.Year(), nowOff.Month(), nowOff.Day(), 0, 0, 0, 0, nowOff.Location())
-	database.DB.Where("valida_dal <= ? AND valida_fino >= ?", nowOff, startOfDayOff).Limit(3).Find(&offers)
+	database.DB.Where("valida_dal <= ? AND valida_fino >= ?", nowOff, startOfDayOff).Order("valida_fino asc, id asc").Find(&offers)
 	var homeOffers []models.HomeOffer
 	for _, o := range offers {
+		if !offerIsActiveNow(o, nowOff) {
+			continue
+		}
 		homeOffers = append(homeOffers, models.HomeOffer{
 			ID:       fmt.Sprint(o.ID),
 			Title:    o.Titolo,
 			ImageUrl: o.ImmagineURL,
 		})
+		if len(homeOffers) == 3 {
+			break
+		}
 	}
 	if len(homeOffers) == 0 {
 		homeOffers = []models.HomeOffer{}
@@ -180,4 +192,30 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 		Events:             homeEvents,
 		Offers:             homeOffers,
 	}, nil
+}
+
+func offerIsActiveNow(offer models.Offer, now time.Time) bool {
+	if offer.RicorrenzaGiorno >= 0 && int(now.Weekday()) != offer.RicorrenzaGiorno {
+		return false
+	}
+
+	start, startErr := time.Parse("15:04", strings.TrimSpace(offer.OraValidaDal))
+	end, endErr := time.Parse("15:04", strings.TrimSpace(offer.OraValidaFino))
+	if startErr != nil || endErr != nil || (strings.TrimSpace(offer.OraValidaDal) == "" && strings.TrimSpace(offer.OraValidaFino) == "") {
+		return true
+	}
+
+	currentMinutes := now.Hour()*60 + now.Minute()
+	startMinutes := start.Hour()*60 + start.Minute()
+	endMinutes := end.Hour()*60 + end.Minute()
+
+	if startMinutes == endMinutes {
+		return true
+	}
+
+	if startMinutes < endMinutes {
+		return currentMinutes >= startMinutes && currentMinutes <= endMinutes
+	}
+
+	return currentMinutes >= startMinutes || currentMinutes <= endMinutes
 }

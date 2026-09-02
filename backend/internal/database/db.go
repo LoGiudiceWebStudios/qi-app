@@ -65,6 +65,22 @@ func Connect() {
 		log.Fatalf("❌ Errore durante l'automigrazione: %v", err)
 	}
 
+	if err := db.Exec("ALTER TABLE products ADD COLUMN IF NOT EXISTS ordine integer DEFAULT 0;").Error; err != nil {
+		log.Fatalf("❌ Errore durante l'aggiornamento colonna ordine prodotti: %v", err)
+	}
+	if err := db.Exec("ALTER TABLE offers ADD COLUMN IF NOT EXISTS ora_valida_dal varchar(5) DEFAULT '';").Error; err != nil {
+		log.Fatalf("❌ Errore durante l'aggiornamento fascia oraria offerte (inizio): %v", err)
+	}
+	if err := db.Exec("ALTER TABLE offers ADD COLUMN IF NOT EXISTS ora_valida_fino varchar(5) DEFAULT '';").Error; err != nil {
+		log.Fatalf("❌ Errore durante l'aggiornamento fascia oraria offerte (fine): %v", err)
+	}
+	if err := db.Exec("ALTER TABLE offers ADD COLUMN IF NOT EXISTS ricorrenza_giorno integer DEFAULT -1;").Error; err != nil {
+		log.Fatalf("❌ Errore durante l'aggiornamento ricorrenza offerte: %v", err)
+	}
+	if err := db.Exec("ALTER TABLE events ADD COLUMN IF NOT EXISTS ricorrenza_giorno integer DEFAULT -1;").Error; err != nil {
+		log.Fatalf("❌ Errore durante l'aggiornamento ricorrenza eventi: %v", err)
+	}
+
 	// Correzione DB (per pulire il vecchio schema incastrato che causava l'errore SQLSTATE 23502)
 	db.Exec("ALTER TABLE events DROP COLUMN IF EXISTS ora_evento;")
 

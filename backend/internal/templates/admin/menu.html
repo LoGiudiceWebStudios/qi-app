@@ -64,6 +64,7 @@
                 </div>
                 
                 <input type="text" id="prod-sdesc" name="short_desc" placeholder="Descrizione breve / Etichetta" class="col-span-1 border rounded-md px-3 py-2 h-11">
+                <input type="number" id="prod-ordine" name="ordine" placeholder="Ordine (es: 1)" class="col-span-1 border rounded-md px-3 py-2 h-11">
                 <input type="file" name="immagine" accept="image/*" class="col-span-1 border rounded-md px-3 py-2 h-11 bg-white">
                 <label class="col-span-1 border rounded-md px-3 py-2 h-11 bg-white text-gray-500 text-sm flex items-center gap-2">Modello 3D Android (.glb): <input type="file" name="modello_3d" accept=".glb,.gltf"></label>
                 <label class="col-span-1 border rounded-md px-3 py-2 h-11 bg-white text-gray-500 text-sm flex items-center gap-2">Modello 3D iOS (.usdz): <input type="file" name="modello_3d_ios" accept=".usdz"></label>
@@ -77,6 +78,7 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-gray-50 border-b border-gray-200 text-sm text-gray-500 uppercase tracking-wider">
+                        <th class="px-6 py-3 font-medium">Ordine</th>
                         <th class="px-6 py-3 font-medium">Prodotto</th>
                         <th class="px-6 py-3 font-medium">Prezzo</th>
                         <th class="px-6 py-3 font-medium">Categoria</th><th class="px-6 py-3 font-medium text-right">Azioni</th></tr></thead><tbody class="divide-y divide-gray-200">
@@ -85,12 +87,13 @@
                         {{ $catName := .Name }}
                         {{ range .Products }}
                         <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ .Ordine }}</td>
                             <td class="px-6 py-4 text-sm text-gray-900">
                                 <strong>{{ .Name }}</strong><br>
                                 {{ if .Description }}<span class="text-xs text-gray-500">{{ .Description }}</span>{{ end }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">€ {{ .Price }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $catName }}</td><td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><button type="button" onclick="editProduct('{{ .ID }}', '{{ $catID }}', '{{ .Name }}', '{{ .Price }}', '{{ .ShortDesc }}', '{{ .Description }}')" class="text-blue-600 hover:text-blue-900 mr-3">Modifica</button><form action="/admin/menu/products/{{ .ID }}/delete" method="POST" class="inline" onsubmit="return confirm('Sei sicuro di voler eliminare questo prodotto?');"><button type="submit" class="text-red-600 hover:text-red-900">Elimina</button></form></td></tr>{{ end }}
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $catName }}</td><td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><button type="button" onclick="editProduct('{{ .ID }}', '{{ $catID }}', '{{ .Name }}', '{{ .Price }}', '{{ .ShortDesc }}', '{{ .Description }}', '{{ .Ordine }}')" class="text-blue-600 hover:text-blue-900 mr-3">Modifica</button><form action="/admin/menu/products/{{ .ID }}/delete" method="POST" class="inline" onsubmit="return confirm('Sei sicuro di voler eliminare questo prodotto?');"><button type="submit" class="text-red-600 hover:text-red-900">Elimina</button></form></td></tr>{{ end }}
                     {{ end }}
                 </tbody>
             </table>
@@ -117,12 +120,13 @@ function cancelCatEdit() {
     document.getElementById('btn-cancel-cat').classList.add('hidden');
 }
 
-function editProduct(id, catId, name, price, shortDesc, desc) {
+function editProduct(id, catId, name, price, shortDesc, desc, ordine) {
     document.getElementById('form-product').action = "/admin/menu/products/" + id + "/edit";
     document.getElementById('prod-cat').value = catId;
     document.getElementById('prod-name').value = name;
     document.getElementById('prod-price').value = price;
     document.getElementById('prod-sdesc').value = shortDesc;
+    document.getElementById('prod-ordine').value = ordine;
     document.getElementById('prod-desc').value = desc;
     document.getElementById('btn-prod-submit').innerText = "Salva Prodotto";
     document.getElementById('btn-cancel-prod').classList.remove('hidden');
@@ -134,6 +138,7 @@ function cancelProdEdit() {
     document.getElementById('prod-name').value = "";
     document.getElementById('prod-price').value = "";
     document.getElementById('prod-sdesc').value = "";
+    document.getElementById('prod-ordine').value = "";
     document.getElementById('prod-desc').value = "";
     document.getElementById('btn-prod-submit').innerText = "Aggiungi Prodotto";
     document.getElementById('btn-cancel-prod').classList.add('hidden');

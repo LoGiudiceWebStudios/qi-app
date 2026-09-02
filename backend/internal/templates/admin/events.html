@@ -61,7 +61,11 @@
                 
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Immagine Copertina</label>
-                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="immagine" type="file" accept="image/*">
+                    <div id="event-image-preview-wrap" class="mb-2 hidden">
+                        <img id="event-image-preview" alt="Anteprima immagine" class="w-16 h-16 object-cover rounded shadow">
+                        <p id="event-image-filename" class="mt-1 text-xs text-gray-500"></p>
+                    </div>
+                    <input id="input-event-image" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="immagine" type="file" accept="image/*">
                 </div>
             </div>
             
@@ -87,6 +91,25 @@
                 <input id="input-event-luogo" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="luogo" type="text" placeholder="Es: Piazza Roma, Roma">
             </div>
 
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">Ripeti ogni</label>
+                <select name="ricorrenza_giorno" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <option value="-1">Nessuna ricorrenza</option>
+                    <option value="1">Lunedì</option>
+                    <option value="2">Martedì</option>
+                    <option value="3">Mercoledì</option>
+                    <option value="4">Giovedì</option>
+                    <option value="5">Venerdì</option>
+                    <option value="6">Sabato</option>
+                    <option value="0">Domenica</option>
+                </select>
+            </div>
+
+            <div id="send-notification-wrap" class="flex items-center gap-2">
+                <input id="input-send-notification" type="checkbox" name="send_notification" checked class="h-4 w-4 text-blue-600 border-gray-300 rounded">
+                <label for="input-send-notification" class="text-sm text-gray-700 font-medium">Invia notifica agli utenti</label>
+            </div>
+
             <div class="flex items-center justify-end mt-6 border-t pt-4">
                 <button type="button" onclick="closeEventModal()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded mr-2">Annulla</button>
                 <button id="modal-event-submit-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Salva Evento</button>
@@ -98,6 +121,10 @@
 <script>
 function openEventModal(id, titolo, descrizione, data, ora, luogo) {
     document.getElementById('modal-event').classList.remove("hidden");
+    const imageInput = document.getElementById('input-event-image');
+    const previewWrap = document.getElementById('event-image-preview-wrap');
+    const previewImage = document.getElementById('event-image-preview');
+    const previewName = document.getElementById('event-image-filename');
     
     if (id) {
         document.getElementById('modal-event-title').innerText = "Modifica Evento";
@@ -108,6 +135,11 @@ function openEventModal(id, titolo, descrizione, data, ora, luogo) {
         document.getElementById('input-event-ora').value = ora;
         document.getElementById('input-event-luogo').value = luogo;
         document.getElementById('modal-event-submit-btn').innerText = "Salva Modifiche";
+        document.getElementById('send-notification-wrap').classList.add("hidden");
+        if (imageInput) imageInput.value = "";
+        if (previewWrap) previewWrap.classList.add("hidden");
+        if (previewImage) previewImage.removeAttribute('src');
+        if (previewName) previewName.textContent = "";
     } else {
         document.getElementById('modal-event-title').innerText = "Nuovo Evento";
         document.getElementById('form-event').action = "/admin/events";
@@ -117,12 +149,45 @@ function openEventModal(id, titolo, descrizione, data, ora, luogo) {
         document.getElementById('input-event-ora').value = "";
         document.getElementById('input-event-luogo').value = "";
         document.getElementById('modal-event-submit-btn').innerText = "Crea Evento";
+        document.getElementById('send-notification-wrap').classList.remove("hidden");
+        document.getElementById('input-send-notification').checked = true;
+        if (imageInput) imageInput.value = "";
+        if (previewWrap) previewWrap.classList.add("hidden");
+        if (previewImage) previewImage.removeAttribute('src');
+        if (previewName) previewName.textContent = "";
     }
 }
 
 function closeEventModal() {
     document.getElementById('modal-event').classList.add("hidden");
 }
+
+(function () {
+    const input = document.getElementById('input-event-image');
+    const previewWrap = document.getElementById('event-image-preview-wrap');
+    const previewImage = document.getElementById('event-image-preview');
+    const fileName = document.getElementById('event-image-filename');
+
+    if (!input || !previewWrap || !previewImage || !fileName) return;
+
+    input.addEventListener('change', function () {
+        const file = this.files && this.files[0];
+        if (!file) {
+            previewWrap.classList.add('hidden');
+            previewImage.removeAttribute('src');
+            fileName.textContent = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            previewImage.src = e.target.result;
+            fileName.textContent = file.name;
+            previewWrap.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    });
+})();
 </script>
 
 {{ template "layout_bottom" . }}

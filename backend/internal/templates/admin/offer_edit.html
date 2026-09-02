@@ -28,6 +28,31 @@
             </div>
         </div>
 
+        <div class="grid grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Ora Valida Dal</label>
+                <input type="time" name="ora_valida_dal" value="{{.Offer.OraValidaDal}}" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 outline-none transition-all">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Ora Valida Fino Al</label>
+                <input type="time" name="ora_valida_fino" value="{{.Offer.OraValidaFino}}" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 outline-none transition-all">
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Ripeti ogni</label>
+            <select name="ricorrenza_giorno" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 outline-none transition-all">
+                <option value="-1" {{if eq .Offer.RicorrenzaGiorno -1}}selected{{end}}>Nessuna ricorrenza</option>
+                <option value="1" {{if eq .Offer.RicorrenzaGiorno 1}}selected{{end}}>Lunedì</option>
+                <option value="2" {{if eq .Offer.RicorrenzaGiorno 2}}selected{{end}}>Martedì</option>
+                <option value="3" {{if eq .Offer.RicorrenzaGiorno 3}}selected{{end}}>Mercoledì</option>
+                <option value="4" {{if eq .Offer.RicorrenzaGiorno 4}}selected{{end}}>Giovedì</option>
+                <option value="5" {{if eq .Offer.RicorrenzaGiorno 5}}selected{{end}}>Venerdì</option>
+                <option value="6" {{if eq .Offer.RicorrenzaGiorno 6}}selected{{end}}>Sabato</option>
+                <option value="0" {{if eq .Offer.RicorrenzaGiorno 0}}selected{{end}}>Domenica</option>
+            </select>
+        </div>
+
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Codice Sconto (Opzionale)</label>
             <input type="text" name="codice_sconto" value="{{.Offer.CodiceSconto}}" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 outline-none transition-all" placeholder="Es: QI-SCONTO-20">
@@ -40,6 +65,10 @@
                 <img src="{{.Offer.ImmagineURL}}" alt="Immagine attuale" class="h-20 object-cover rounded-md border border-gray-300">
             </div>
             {{end}}
+            <div id="offer-image-preview-wrap" class="mb-3 hidden">
+                <img id="offer-image-preview" alt="Anteprima nuova immagine" class="h-20 w-20 object-cover rounded-md border border-gray-300">
+                <p id="offer-image-filename" class="mt-1 text-xs text-gray-500"></p>
+            </div>
             <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-green-400 transition-colors">
                 <div class="space-y-1 text-center">
                     <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
@@ -66,5 +95,34 @@
 
     </form>
 </div>
+
+<script>
+(function () {
+    const input = document.getElementById('immagine');
+    const previewWrap = document.getElementById('offer-image-preview-wrap');
+    const previewImage = document.getElementById('offer-image-preview');
+    const fileName = document.getElementById('offer-image-filename');
+
+    if (!input || !previewWrap || !previewImage || !fileName) return;
+
+    input.addEventListener('change', function () {
+        const file = this.files && this.files[0];
+        if (!file) {
+            previewWrap.classList.add('hidden');
+            previewImage.removeAttribute('src');
+            fileName.textContent = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            previewImage.src = e.target.result;
+            fileName.textContent = file.name;
+            previewWrap.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    });
+})();
+</script>
 
 {{ template "layout_bottom" . }}
