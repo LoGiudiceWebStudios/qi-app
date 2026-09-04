@@ -62,19 +62,14 @@ class _MenuPageState extends State<MenuPage> {
                 categories.isEmpty
                     ? const Center(child: CircularProgressIndicator())
                     : GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(
-                        16,
-                        24,
-                        16,
-                        120,
-                      ), // Spaziatura laterale ridotta per allargare le card
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio:
-                            0.90, // Le card del mockup sono leggermente più alte che larghe
-                      ),
+                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 120),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                            childAspectRatio: 0.90,
+                          ),
                       itemCount: categories.length,
                       itemBuilder: (context, index) {
                         final category = categories[index];
@@ -92,6 +87,7 @@ class _MenuPageState extends State<MenuPage> {
                             );
                           },
                           child: Container(
+                            clipBehavior: Clip.antiAlias,
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(30),
@@ -108,49 +104,58 @@ class _MenuPageState extends State<MenuPage> {
                                 ),
                               ],
                             ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                if (category.imageUrl.isNotEmpty)
-                                  Image.network(
-                                    '${ApiService.serverUrl}${category.imageUrl}',
-                                    height: 100,
-                                    fit: BoxFit.contain,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            const Icon(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 14,
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 90,
+                                    child:
+                                        category.imageUrl.isNotEmpty
+                                            ? Image.network(
+                                              '${ApiService.serverUrl}${category.imageUrl}',
+                                              fit: BoxFit.contain,
+                                              errorBuilder:
+                                                  (
+                                                    context,
+                                                    error,
+                                                    stackTrace,
+                                                  ) => const Icon(
+                                                    Icons.fastfood,
+                                                    size: 60,
+                                                    color: Colors.grey,
+                                                  ),
+                                            )
+                                            : const Icon(
                                               Icons.fastfood,
                                               size: 60,
                                               color: Colors.grey,
                                             ),
-                                  )
-                                else
-                                  const Icon(
-                                    Icons.fastfood,
-                                    size: 60,
-                                    color: Colors.grey,
                                   ),
-                                const SizedBox(height: 12),
-                                  Text(
-                                    category.name,
-                                    style: const TextStyle(
-                                      fontSize: 19,
-                                      fontWeight: FontWeight.w800,
-                                      fontFamily: 'Open Sauce',
-                                      color: Color(0xFF1E293B),
-                                      height: 1.05,
+                                  const SizedBox(height: 10),
+                                  Flexible(
+                                    child: Text(
+                                      category.name,
+                                      style: const TextStyle(
+                                        fontSize: 19,
+                                        fontWeight: FontWeight.w800,
+                                        fontFamily: 'Open Sauce',
+                                        color: Color(0xFF1E293B),
+                                        height: 1.05,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      softWrap: true,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    textAlign: TextAlign.center,
-                                    softWrap: true,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                const SizedBox(height: 4),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12.0,
-                                  ),
-                                  child: Text(
+                                  const SizedBox(height: 4),
+                                  Text(
                                     category.description.isNotEmpty
                                         ? category.description
                                         : '',
@@ -164,8 +169,8 @@ class _MenuPageState extends State<MenuPage> {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         );

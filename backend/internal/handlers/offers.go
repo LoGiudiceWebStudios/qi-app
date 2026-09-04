@@ -18,7 +18,7 @@ func GetOffers(c *gin.Context) {
 	now := time.Now()
 	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
-	if err := database.DB.Where("valida_dal <= ? AND valida_fino >= ?", now, startOfDay).Order("valida_fino ASC").Find(&offers).Error; err != nil {
+	if err := database.DB.Where("(valida_dal <= ? AND valida_fino >= ?) OR ricorrenza_giorno >= 0", now, startOfDay).Order("valida_fino ASC").Find(&offers).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse("Impossibile recuperare le offerte", "errore_database"))
 		return
 	}
@@ -49,6 +49,10 @@ func GetOffers(c *gin.Context) {
 }
 
 func offerIsActiveNow(offer models.Offer, now time.Time) bool {
+	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	if offer.RicorrenzaGiorno < 0 && (offer.ValidaDal.After(now) || offer.ValidaFino.Before(startOfToday)) {
+		return false
+	}
 	if offer.RicorrenzaGiorno >= 0 && int(now.Weekday()) != offer.RicorrenzaGiorno {
 		return false
 	}

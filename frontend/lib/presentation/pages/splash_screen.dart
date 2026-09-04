@@ -26,16 +26,21 @@ class _SplashScreenState extends State<SplashScreen> {
 
     try {
       final remoteConfig = FirebaseRemoteConfig.instance;
-      await remoteConfig.setConfigSettings(RemoteConfigSettings(
-        fetchTimeout: const Duration(seconds: 10),
-        minimumFetchInterval: const Duration(minutes: 5), // Fetch often during dev
-      ));
+      await remoteConfig.setConfigSettings(
+        RemoteConfigSettings(
+          fetchTimeout: const Duration(seconds: 10),
+          minimumFetchInterval: const Duration(
+            minutes: 60,
+          ), // Fetch often during dev
+        ),
+      );
 
       // Defaults
       await remoteConfig.setDefaults(const {
         'force_update_version': '1.0.0',
-        'store_url_android': 'https://play.google.com/store/apps/details?id=com.qifoodfocus.app',
-        'store_url_ios': 'https://apps.apple.com/app/id123456789',
+        'store_url_android':
+            'https://play.google.com/store/apps/details?id=com.qifoodfocus.app',
+        'store_url_ios': 'https://apps.apple.com/it/app/qi-food-e-focus/id6782424527',
       });
 
       await remoteConfig.fetchAndActivate();
@@ -43,17 +48,20 @@ class _SplashScreenState extends State<SplashScreen> {
       final forceVersion = remoteConfig.getString('force_update_version');
       final androidUrl = remoteConfig.getString('store_url_android');
       final iosUrl = remoteConfig.getString('store_url_ios');
-      
+
       if (Platform.isAndroid) {
         storeUrl = androidUrl;
       } else if (Platform.isIOS) {
         storeUrl = iosUrl;
       }
-      
-      final packageInfo = await PackageInfo.fromPlatform();
-      final currentVersion = packageInfo.version; 
 
-      if (_isVersionLower(currentVersion: currentVersion, requiredVersion: forceVersion)) {
+      final packageInfo = await PackageInfo.fromPlatform();
+      final currentVersion = packageInfo.version;
+
+      if (_isVersionLower(
+        currentVersion: currentVersion,
+        requiredVersion: forceVersion,
+      )) {
         needsUpdate = true;
       }
     } catch (e) {
@@ -68,7 +76,9 @@ class _SplashScreenState extends State<SplashScreen> {
     if (needsUpdate) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => UpdateScreen(storeUrl: storeUrl)),
+        MaterialPageRoute(
+          builder: (context) => UpdateScreen(storeUrl: storeUrl),
+        ),
       );
     } else {
       final token = await SecureStorageService.getToken();
@@ -82,7 +92,10 @@ class _SplashScreenState extends State<SplashScreen> {
     }
   }
 
-  bool _isVersionLower({required String currentVersion, required String requiredVersion}) {
+  bool _isVersionLower({
+    required String currentVersion,
+    required String requiredVersion,
+  }) {
     List<String> currentParts = currentVersion.split('.');
     List<String> requiredParts = requiredVersion.split('.');
 
@@ -107,23 +120,25 @@ class _SplashScreenState extends State<SplashScreen> {
         children: [
           // Sfondo con l'immagine reale dal tavolo (assumendo ce ne sia una o la setti dopo)
           Image.asset(
-            'assets/images/background.png', 
-            
+            'assets/images/background.png',
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
           ),
-          
+
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                  Image.asset(
-                    'assets/icons/Logo_2.jpg',
-                    width: 212,
-                    height: 212,
-                    fit: BoxFit.contain,
-                  ),
+                Image.asset(
+                  'assets/icons/Logo_2.jpg',
+                  width: 212,
+                  height: 212,
+                  fit: BoxFit.contain,
+                ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );

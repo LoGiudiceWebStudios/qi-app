@@ -14,6 +14,7 @@
 /backend/serviceAccountKey.json
 
 # Frontend: Flutter & Dart
+/backend/api_linux
 /frontend/.dart_tool/
 /frontend/.packages
 /frontend/build/

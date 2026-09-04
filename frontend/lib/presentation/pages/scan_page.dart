@@ -8,7 +8,9 @@ import 'qr_scanner_page.dart';
 import '../../data/services/api_service.dart';
 
 class ScanPage extends StatefulWidget {
-  const ScanPage({super.key});
+  const ScanPage({super.key, this.openRewards = false});
+
+  final bool openRewards;
 
   @override
   State<ScanPage> createState() => _ScanPageState();
@@ -16,6 +18,7 @@ class ScanPage extends StatefulWidget {
 
 class _ScanPageState extends State<ScanPage> {
   final TextEditingController _codeController = TextEditingController();
+  final GlobalKey _rewardsKey = GlobalKey();
   int? _userPoints;
   int? _userId;
   String? _userName;
@@ -27,6 +30,26 @@ class _ScanPageState extends State<ScanPage> {
     super.initState();
     _fetchProfile();
     _rewardsFuture = _fetchRewards();
+    if (widget.openRewards) {
+      _rewardsFuture!.then((_) {
+        if (!mounted) return;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _scrollToRewards();
+        });
+      });
+    }
+  }
+
+  void _scrollToRewards() {
+    final rewardsContext = _rewardsKey.currentContext;
+    if (rewardsContext != null) {
+      Scrollable.ensureVisible(
+        rewardsContext,
+        alignment: 0.20,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   Future<List<dynamic>> _fetchRewards() async {
@@ -206,7 +229,8 @@ class _ScanPageState extends State<ScanPage> {
                   const SizedBox(height: 14),
                   const _GuidaItem(
                     title: '2. Quanti punti ottengo?',
-                    content: 'L\'accumulo dei punti è proporzionale all\'importo della tua spesa. Inoltre, il sistema applica un moltiplicatore variabile che premia le tue consumazioni in specifiche fasce orarie della giornata.',
+                    content:
+                        'L\'accumulo dei punti è proporzionale all\'importo della tua spesa. Inoltre, il sistema applica un moltiplicatore variabile che premia le tue consumazioni in specifiche fasce orarie della giornata.',
                   ),
                   const SizedBox(height: 14),
                   const _GuidaItem(
@@ -221,13 +245,16 @@ class _ScanPageState extends State<ScanPage> {
                     color: const Color(0xFFE5E7EB),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
-                    'Premi',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Open Sauce',
-                      color: Colors.black,
+                  KeyedSubtree(
+                    key: _rewardsKey,
+                    child: const Text(
+                      'Premi',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Open Sauce',
+                        color: Colors.black,
+                      ),
                     ),
                   ),
                   _buildPremiSection(),
@@ -270,11 +297,20 @@ class _ScanPageState extends State<ScanPage> {
           itemBuilder: (context, index) {
             final reward = rewards[index];
             final String rawImage = reward['immagine_url'] ?? '';
-            final String? imageUrl = rawImage.isNotEmpty
-                ? (rawImage.startsWith('http')
-                    ? rawImage
-                    : "${ApiService.serverUrl}${rawImage.startsWith('/') ? '' : '/'}${rawImage.replaceAll('\\', '/')}")
-                : null;
+            final int requiredPoints =
+                int.tryParse('${reward['punti_richiesti'] ?? 0}') ?? 0;
+            final int currentPoints = _userPoints ?? 0;
+            final double progress =
+                requiredPoints > 0
+                    ? (currentPoints / requiredPoints).clamp(0.0, 1.0)
+                    : 0.0;
+            final bool rewardReached = progress >= 1.0;
+            final String? imageUrl =
+                rawImage.isNotEmpty
+                    ? (rawImage.startsWith('http')
+                        ? rawImage
+                        : "${ApiService.serverUrl}${rawImage.startsWith('/') ? '' : '/'}${rawImage.replaceAll('\\', '/')}")
+                    : null;
 
             return Container(
               padding: const EdgeInsets.all(16),
@@ -300,20 +336,24 @@ class _ScanPageState extends State<ScanPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     clipBehavior: Clip.hardEdge,
-                    child: imageUrl != null
-                        ? Image.network(
-                            imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Icon(Icons.error, color: AppColors.topBarOffers),
-                          )
-                        : Center(
-                            child: Icon(
-                              Icons.card_giftcard,
-                              color: AppColors.topBarOffers,
-                              size: 30,
+                    child:
+                        imageUrl != null
+                            ? Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (context, error, stackTrace) => Icon(
+                                    Icons.error,
+                                    color: AppColors.topBarOffers,
+                                  ),
+                            )
+                            : Center(
+                              child: Icon(
+                                Icons.card_giftcard,
+                                color: AppColors.topBarOffers,
+                                size: 30,
+                              ),
                             ),
-                          ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -347,6 +387,39 @@ class _ScanPageState extends State<ScanPage> {
                             color: const Color(0xFFE9B416),
                             fontFamily: 'Open Sauce',
                           ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: LinearProgressIndicator(
+                                  value: progress,
+                                  minHeight: 8,
+                                  backgroundColor: const Color(0xFFE5E7EB),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    rewardReached
+                                        ? const Color(0xFF008F30)
+                                        : const Color(0xFFE9B416),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              '${(progress * 100).round()}%',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color:
+                                    rewardReached
+                                        ? const Color(0xFF008F30)
+                                        : const Color(0xFFE9B416),
+                                fontFamily: 'Open Sauce',
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

@@ -1,6 +1,30 @@
 {{ template "layout_top" . }}
 
-<h2 class="text-2xl font-semibold text-gray-800 mb-6">Lista Utenti Registrati</h2>
+<div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-6">
+    <div>
+        <h2 class="text-2xl font-semibold text-gray-800">Lista Utenti Registrati</h2>
+        <p class="text-sm text-gray-500 mt-1">Cerca e gestisci gli account registrati nell'app.</p>
+    </div>
+    <form method="GET" action="/admin/users" class="flex w-full md:w-auto gap-2">
+        <input type="search" name="q" value="{{ .Search }}" placeholder="Cerca nome, email o telefono" class="w-full md:w-80 px-4 py-2 border border-gray-300 rounded-md text-sm focus:ring-green-500 focus:border-green-500 outline-none">
+        <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors">Cerca</button>
+        {{ if .Search }}
+        <a href="/admin/users" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md transition-colors">Reset</a>
+        {{ end }}
+    </form>
+</div>
+
+{{ if .Deleted }}
+<div class="mb-4 px-4 py-3 rounded-md bg-green-50 border border-green-200 text-green-700 text-sm">Account eliminato correttamente.</div>
+{{ end }}
+
+{{ if .PointsAdded }}
+<div class="mb-4 px-4 py-3 rounded-md bg-green-50 border border-green-200 text-green-700 text-sm">Punti aggiunti correttamente all'utente.</div>
+{{ end }}
+
+{{ if .Error }}
+<div class="mb-4 px-4 py-3 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm">Operazione non completata. Controlla i dati inseriti e riprova.</div>
+{{ end }}
 
 <div class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
     <table class="min-w-full divide-y border-gray-200">
@@ -12,6 +36,8 @@
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefono</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Punti</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aggiungi punti</th>
+                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Azioni</th>
             </tr>
         </thead>
         <tbody class="bg-white divide-y border-gray-200">
@@ -23,10 +49,21 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ .Email }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ .Telefono }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">{{ .Punti }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <form method="POST" action="/admin/users/{{ .ID }}/points" class="flex items-center gap-2">
+                        <input type="number" name="points" min="1" required placeholder="Punti" class="w-24 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-green-500 focus:border-green-500 outline-none">
+                        <button type="submit" class="px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors">Aggiungi</button>
+                    </form>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
+                    <form method="POST" action="/admin/users/{{ .ID }}/delete" onsubmit="return confirm('Sicuro di voler eliminare questo account?');" class="inline">
+                        <button type="submit" class="text-red-500 hover:text-red-700 font-medium">Elimina</button>
+                    </form>
+                </td>
             </tr>
             {{ else }}
             <tr>
-                <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">Nessun utente trovato.</td>
+                <td colspan="8" class="px-6 py-4 text-center text-sm text-gray-500">Nessun utente trovato.</td>
             </tr>
             {{ end }}
         </tbody>

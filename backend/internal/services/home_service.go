@@ -132,17 +132,21 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 
 	// Recuperiamo gli eventi
 	var events []models.Event
-	database.DB.Where("data_evento >= ?", time.Now().Add(-12*time.Hour)).Order("data_evento asc").Limit(20).Find(&events)
+	database.DB.Where("data_evento >= ? OR ricorrenza_giorno >= 0", nowT.Add(-12*time.Hour)).Order("data_evento asc").Find(&events)
 	var homeEvents []models.HomeEvent
 	for _, e := range events {
-		if e.RicorrenzaGiorno >= 0 && int(nowT.Weekday()) != e.RicorrenzaGiorno {
+		if !eventIsActiveToday(e, nowT) {
 			continue
+		}
+		date := e.DataEvento
+		if e.RicorrenzaGiorno >= 0 {
+			date = time.Date(nowT.Year(), nowT.Month(), nowT.Day(), 0, 0, 0, 0, nowT.Location())
 		}
 		homeEvents = append(homeEvents, models.HomeEvent{
 			ID:       fmt.Sprint(e.ID),
 			Title:    e.Titolo,
 			ImageUrl: e.ImmagineURL,
-			Date:     e.DataEvento.Format("2006-01-02"),
+			Date:     date.Format("2006-01-02"),
 		})
 		if len(homeEvents) == 3 {
 			break
@@ -156,7 +160,7 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 	var offers []models.Offer
 	nowOff := time.Now()
 	startOfDayOff := time.Date(nowOff.Year(), nowOff.Month(), nowOff.Day(), 0, 0, 0, 0, nowOff.Location())
-	database.DB.Where("valida_dal <= ? AND valida_fino >= ?", nowOff, startOfDayOff).Order("valida_fino asc, id asc").Find(&offers)
+	database.DB.Where("(valida_dal <= ? AND valida_fino >= ?) OR ricorrenza_giorno >= 0", nowOff, startOfDayOff).Order("valida_fino asc, id asc").Find(&offers)
 	var homeOffers []models.HomeOffer
 	for _, o := range offers {
 		if !offerIsActiveNow(o, nowOff) {
@@ -194,7 +198,19 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 	}, nil
 }
 
+func eventIsActiveToday(event models.Event, now time.Time) bool {
+	if event.RicorrenzaGiorno < 0 {
+		return !event.DataEvento.Before(now.Add(-12 * time.Hour))
+	}
+	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	return !event.DataEvento.After(startOfToday) && int(now.Weekday()) == event.RicorrenzaGiorno
+}
+
 func offerIsActiveNow(offer models.Offer, now time.Time) bool {
+	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	if offer.RicorrenzaGiorno < 0 && (offer.ValidaDal.After(now) || offer.ValidaFino.Before(startOfToday)) {
+		return false
+	}
 	if offer.RicorrenzaGiorno >= 0 && int(now.Weekday()) != offer.RicorrenzaGiorno {
 		return false
 	}

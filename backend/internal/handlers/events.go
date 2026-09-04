@@ -15,13 +15,14 @@ func eventMatchesRecurrence(event models.Event, now time.Time) bool {
 	if event.RicorrenzaGiorno < 0 {
 		return true
 	}
-	return int(now.Weekday()) == event.RicorrenzaGiorno
+	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	return !event.DataEvento.After(startOfToday) && int(now.Weekday()) == event.RicorrenzaGiorno
 }
 
 func GetEvents(c *gin.Context) {
 	now := time.Now()
 	var events []models.Event
-	if err := database.DB.Where("data_evento >= ?", now.Add(-12*time.Hour)).Order("data_evento asc").Find(&events).Error; err != nil {
+	if err := database.DB.Where("data_evento >= ? OR ricorrenza_giorno >= 0", now.Add(-12*time.Hour)).Order("data_evento asc").Find(&events).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Errore nel recupero degli eventi"})
 		return
 	}
@@ -29,6 +30,9 @@ func GetEvents(c *gin.Context) {
 	filtered := make([]models.Event, 0, len(events))
 	for _, event := range events {
 		if eventMatchesRecurrence(event, now) {
+			if event.RicorrenzaGiorno >= 0 {
+				event.DataEvento = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+			}
 			filtered = append(filtered, event)
 		}
 	}

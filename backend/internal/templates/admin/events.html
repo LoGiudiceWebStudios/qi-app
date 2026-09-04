@@ -31,7 +31,7 @@
                 <td class="py-3 px-6 font-semibold">{{ .Titolo }}</td>
                 <td class="py-3 px-6">{{ .DataEvento.Format "2006-01-02" }} {{ .Ora }}</td>
                 <td class="py-3 px-6">{{ .Luogo }}</td><td class="py-3 px-6 flex items-center space-x-2">
-                    <button type="button" onclick="openEventModal('{{ .ID }}', '{{ .Titolo }}', '{{ .Descrizione }}', '{{ .DataEvento.Format "2006-01-02" }}', '{{ .Ora }}', '{{ .Luogo }}')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded text-xs">Modifica</button>
+                    <button type="button" onclick="openEventModal('{{ .ID }}', '{{ .Titolo }}', '{{ .Descrizione }}', '{{ .DataEvento.Format "2006-01-02" }}', '{{ .Ora }}', '{{ .Luogo }}', '{{ .RicorrenzaGiorno }}')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded text-xs">Modifica</button>
                     <form action="/admin/events/{{ .ID }}/delete" method="POST" onsubmit="return confirm('Sei sicuro di voler eliminare questo evento?');"><button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded text-xs">Elimina</button></form></td></tr>{{ else }}
             <tr>
                 <td colspan="5" class="py-4 text-center text-gray-500">Nessun evento disponibile</td>
@@ -93,7 +93,7 @@
 
             <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2">Ripeti ogni</label>
-                <select name="ricorrenza_giorno" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <select id="input-event-ricorrenza" name="ricorrenza_giorno" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                     <option value="-1">Nessuna ricorrenza</option>
                     <option value="1">Lunedì</option>
                     <option value="2">Martedì</option>
@@ -119,12 +119,13 @@
 </div>
 
 <script>
-function openEventModal(id, titolo, descrizione, data, ora, luogo) {
+function openEventModal(id, titolo, descrizione, data, ora, luogo, ricorrenzaGiorno) {
     document.getElementById('modal-event').classList.remove("hidden");
     const imageInput = document.getElementById('input-event-image');
     const previewWrap = document.getElementById('event-image-preview-wrap');
     const previewImage = document.getElementById('event-image-preview');
     const previewName = document.getElementById('event-image-filename');
+    const recurrenceInput = document.getElementById('input-event-ricorrenza');
     
     if (id) {
         document.getElementById('modal-event-title').innerText = "Modifica Evento";
@@ -134,6 +135,7 @@ function openEventModal(id, titolo, descrizione, data, ora, luogo) {
         document.getElementById('input-event-data').value = data;
         document.getElementById('input-event-ora').value = ora;
         document.getElementById('input-event-luogo').value = luogo;
+        if (recurrenceInput) recurrenceInput.value = ricorrenzaGiorno || "-1";
         document.getElementById('modal-event-submit-btn').innerText = "Salva Modifiche";
         document.getElementById('send-notification-wrap').classList.add("hidden");
         if (imageInput) imageInput.value = "";
@@ -148,6 +150,7 @@ function openEventModal(id, titolo, descrizione, data, ora, luogo) {
         document.getElementById('input-event-data').value = "";
         document.getElementById('input-event-ora').value = "";
         document.getElementById('input-event-luogo').value = "";
+        if (recurrenceInput) recurrenceInput.value = "-1";
         document.getElementById('modal-event-submit-btn').innerText = "Crea Evento";
         document.getElementById('send-notification-wrap').classList.remove("hidden");
         document.getElementById('input-send-notification').checked = true;

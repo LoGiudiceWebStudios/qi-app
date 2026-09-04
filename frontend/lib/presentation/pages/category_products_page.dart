@@ -9,7 +9,11 @@ import 'dart:convert';
 class CategoryProductsPage extends StatefulWidget {
   final int categoryId;
   final String categoryName;
-  const CategoryProductsPage({super.key, required this.categoryId, required this.categoryName});
+  const CategoryProductsPage({
+    super.key,
+    required this.categoryId,
+    required this.categoryName,
+  });
 
   @override
   _CategoryProductsPageState createState() => _CategoryProductsPageState();
@@ -73,14 +77,14 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
                 products.isEmpty
                     ? const Center(child: CircularProgressIndicator())
                     : GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 120),
+                      padding: const EdgeInsets.fromLTRB(12, 24, 12, 120),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
-                            crossAxisSpacing: 16,
+                            crossAxisSpacing: 12,
                             mainAxisSpacing: 16,
                             childAspectRatio:
-                                0.70, // Resa più alta per ospitare il prezzo
+                                0.68, // Resa più alta per ospitare il prezzo
                           ),
                       itemCount: products.length,
                       itemBuilder: (context, index) {
@@ -98,6 +102,7 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
                           },
                           borderRadius: BorderRadius.circular(30),
                           child: Container(
+                            clipBehavior: Clip.antiAlias,
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(30),
@@ -114,48 +119,66 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
                                 ),
                               ],
                             ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                if (product.imageUrl.isNotEmpty)
-                                  Image.network(
-                                    '${ApiService.serverUrl}${product.imageUrl}',
-                                    height: 100,
-                                    fit: BoxFit.contain,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            const Icon(
-                                              Icons.fastfood,
-                                              size: 60,
-                                              color: Colors.grey,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 14,
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(20),
+                                    child:
+                                        product.imageUrl.isNotEmpty
+                                            ? Image.network(
+                                              '${ApiService.serverUrl}${product.imageUrl}',
+                                              width: double.infinity,
+                                              height: 90,
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (
+                                                    context,
+                                                    error,
+                                                    stackTrace,
+                                                  ) => const SizedBox(
+                                                    width: double.infinity,
+                                                    height: 90,
+                                                    child: Icon(
+                                                      Icons.fastfood,
+                                                      size: 60,
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                            )
+                                            : const SizedBox(
+                                              width: double.infinity,
+                                              height: 90,
+                                              child: Icon(
+                                                Icons.fastfood,
+                                                size: 60,
+                                                color: Colors.grey,
+                                              ),
                                             ),
-                                  )
-                                else
-                                  const Icon(
-                                    Icons.fastfood,
-                                    size: 60,
-                                    color: Colors.grey,
                                   ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  product.name,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w800,
-                                    fontFamily: 'Open Sauce',
-                                    color: Color(0xFF1E293B),
-                                  ),
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 6),
-                                if (product.shortDesc.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12.0,
-                                    ),
+                                  const SizedBox(height: 10),
+                                  Flexible(
                                     child: Text(
+                                      product.name,
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w800,
+                                        fontFamily: 'Open Sauce',
+                                        color: Color(0xFF1E293B),
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  if (product.shortDesc.isNotEmpty)
+                                    Text(
                                       product.shortDesc,
                                       style: const TextStyle(
                                         fontSize: 13,
@@ -166,21 +189,21 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
                                       textAlign: TextAlign.center,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
+                                    )
+                                  else
+                                    const SizedBox(height: 18),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '€${product.price.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Open Sauce',
+                                      color: Color(0xFFE9B416),
                                     ),
-                                  )
-                                else
-                                  const SizedBox(height: 18),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '€${product.price.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w600, // SemiBold
-                                    fontFamily: 'Open Sauce',
-                                    color: Color(0xFFE9B416),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         );
