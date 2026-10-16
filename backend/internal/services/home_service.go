@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"qi-backend/internal/database"
+	"qi-backend/internal/eventvisibility"
 	"qi-backend/internal/models"
 )
 
@@ -132,10 +133,12 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 
 	// Recuperiamo gli eventi
 	var events []models.Event
-	database.DB.Where("data_evento >= ? OR ricorrenza_giorno >= 0", nowT.Add(-12*time.Hour)).Order("data_evento asc").Find(&events)
+	eventCutoff := nowT.Add(-12 * time.Hour)
+	eventCutoff = time.Date(eventCutoff.Year(), eventCutoff.Month(), eventCutoff.Day(), 0, 0, 0, 0, loc)
+	database.DB.Where("data_evento >= ? OR ricorrenza_giorno >= 0", eventCutoff).Order("data_evento asc").Find(&events)
 	var homeEvents []models.HomeEvent
 	for _, e := range events {
-		if !eventIsActiveToday(e, nowT) {
+		if !eventvisibility.IsActive(e, nowT) {
 			continue
 		}
 		date := e.DataEvento
@@ -196,14 +199,6 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 		Events:             homeEvents,
 		Offers:             homeOffers,
 	}, nil
-}
-
-func eventIsActiveToday(event models.Event, now time.Time) bool {
-	if event.RicorrenzaGiorno < 0 {
-		return !event.DataEvento.Before(now.Add(-12 * time.Hour))
-	}
-	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	return !event.DataEvento.After(startOfToday) && int(now.Weekday()) == event.RicorrenzaGiorno
 }
 
 func offerIsActiveNow(offer models.Offer, now time.Time) bool {

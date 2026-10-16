@@ -39,6 +39,7 @@ func main() {
 	adminNotificationsHandler := admin.NewNotificationsHandler()
 	adminPointsHandler := admin.NewPointsHandler()
 	adminRewardsHandler := admin.NewRewardsHandler()
+	adminCardLevelsHandler := admin.NewCardLevelsHandler()
 	adminUsersHandler := admin.NewUsersHandler()
 	userPointsHandler := handlers.NewUserPointsHandler()
 
@@ -117,6 +118,7 @@ func main() {
 			protected.POST("/menu/products/:id/edit", adminMenuHandler.UpdateProduct)
 			protected.POST("/menu/products/:id/delete", adminMenuHandler.DeleteProduct)
 			protected.GET("/users", adminUsersHandler.HandleIndex)
+			protected.POST("/users/:id/card-level", adminUsersHandler.AssignCardLevel)
 			protected.GET("/users/:id/points", adminUsersHandler.RedirectToUsers)
 			protected.POST("/users/:id/points", adminUsersHandler.AddPoints)
 			protected.POST("/users/:id/delete", adminUsersHandler.Delete)
@@ -131,7 +133,14 @@ func main() {
 			protected.GET("/rewards", adminRewardsHandler.List)
 			protected.GET("/rewards/new", adminRewardsHandler.CreateGet)
 			protected.POST("/rewards", adminRewardsHandler.CreatePost)
+			protected.GET("/rewards/:id/edit", adminRewardsHandler.EditGet)
+			protected.POST("/rewards/:id/edit", adminRewardsHandler.UpdatePost)
 			protected.POST("/rewards/:id/delete", adminRewardsHandler.Delete)
+			protected.GET("/card-levels", adminCardLevelsHandler.List)
+			protected.POST("/card-levels", adminCardLevelsHandler.Create)
+			protected.GET("/card-levels/:id/edit", adminCardLevelsHandler.Edit)
+			protected.POST("/card-levels/:id/edit", adminCardLevelsHandler.Update)
+			protected.POST("/card-levels/:id/delete", adminCardLevelsHandler.Delete)
 		}
 	}
 

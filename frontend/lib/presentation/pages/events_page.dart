@@ -7,7 +7,9 @@ import '../widgets/custom_top_bar.dart';
 import '../widgets/event_card_widget.dart';
 
 class EventsPage extends StatefulWidget {
-  const EventsPage({super.key});
+  const EventsPage({super.key, this.initialEventId});
+
+  final String? initialEventId;
 
   @override
   State<EventsPage> createState() => _EventsPageState();
@@ -20,6 +22,22 @@ class _EventsPageState extends State<EventsPage> {
   void initState() {
     super.initState();
     _eventsFuture = EventApi().fetchEvents();
+    final requestedEventId = widget.initialEventId;
+    if (requestedEventId != null) {
+      _eventsFuture.then((events) {
+        Event? requestedEvent;
+        for (final event in events) {
+          if (event.id.toString() == requestedEventId) {
+            requestedEvent = event;
+            break;
+          }
+        }
+        if (requestedEvent == null) return;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _showEventDetails(requestedEvent!);
+        });
+      });
+    }
   }
 
   void _retryFetch() {
@@ -111,7 +129,7 @@ class _EventsPageState extends State<EventsPage> {
                   icon: const Icon(Icons.arrow_back, color: Colors.white),
                   onPressed: () => Navigator.of(context).pop(),
                 );
-              }
+              },
             ),
             titleStyle: const TextStyle(
               color: Colors.white,

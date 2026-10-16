@@ -8,28 +8,23 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"qi-backend/internal/database"
+	"qi-backend/internal/eventvisibility"
 	"qi-backend/internal/models"
 )
-
-func eventMatchesRecurrence(event models.Event, now time.Time) bool {
-	if event.RicorrenzaGiorno < 0 {
-		return true
-	}
-	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	return !event.DataEvento.After(startOfToday) && int(now.Weekday()) == event.RicorrenzaGiorno
-}
 
 func GetEvents(c *gin.Context) {
 	now := time.Now()
 	var events []models.Event
-	if err := database.DB.Where("data_evento >= ? OR ricorrenza_giorno >= 0", now.Add(-12*time.Hour)).Order("data_evento asc").Find(&events).Error; err != nil {
+	eventCutoff := now.In(time.Local).Add(-12 * time.Hour)
+	eventCutoff = time.Date(eventCutoff.Year(), eventCutoff.Month(), eventCutoff.Day(), 0, 0, 0, 0, eventCutoff.Location())
+	if err := database.DB.Where("data_evento >= ? OR ricorrenza_giorno >= 0", eventCutoff).Order("data_evento asc").Find(&events).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Errore nel recupero degli eventi"})
 		return
 	}
 
 	filtered := make([]models.Event, 0, len(events))
 	for _, event := range events {
-		if eventMatchesRecurrence(event, now) {
+		if eventvisibility.IsActive(event, now) {
 			if event.RicorrenzaGiorno >= 0 {
 				event.DataEvento = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 			}

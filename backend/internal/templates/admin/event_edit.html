@@ -54,16 +54,10 @@
         </div>
 
         <div>
-            <label class="block text-gray-700 text-sm font-bold mb-2">Ripeti ogni</label>
+            <label class="block text-gray-700 text-sm font-bold mb-2">Ricorrenza</label>
             <select name="ricorrenza_giorno" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                 <option value="-1" {{if eq .Event.RicorrenzaGiorno -1}}selected{{end}}>Nessuna ricorrenza</option>
-                <option value="1" {{if eq .Event.RicorrenzaGiorno 1}}selected{{end}}>Lunedì</option>
-                <option value="2" {{if eq .Event.RicorrenzaGiorno 2}}selected{{end}}>Martedì</option>
-                <option value="3" {{if eq .Event.RicorrenzaGiorno 3}}selected{{end}}>Mercoledì</option>
-                <option value="4" {{if eq .Event.RicorrenzaGiorno 4}}selected{{end}}>Giovedì</option>
-                <option value="5" {{if eq .Event.RicorrenzaGiorno 5}}selected{{end}}>Venerdì</option>
-                <option value="6" {{if eq .Event.RicorrenzaGiorno 6}}selected{{end}}>Sabato</option>
-                <option value="0" {{if eq .Event.RicorrenzaGiorno 0}}selected{{end}}>Domenica</option>
+                <option value="0" {{if ge .Event.RicorrenzaGiorno 0}}selected{{end}}>Ogni giorno</option>
             </select>
         </div>
 

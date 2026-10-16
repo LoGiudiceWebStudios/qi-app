@@ -5,6 +5,7 @@ import 'dart:convert';
 import '../../core/theme/app_colors.dart';
 import '../widgets/custom_top_bar.dart';
 import 'qr_scanner_page.dart';
+import 'reward_3d_page.dart';
 import '../../data/services/api_service.dart';
 
 class ScanPage extends StatefulWidget {
@@ -22,6 +23,7 @@ class _ScanPageState extends State<ScanPage> {
   int? _userPoints;
   int? _userId;
   String? _userName;
+  Map<String, dynamic>? _cardLevel;
   bool _isLoadingPoints = true;
   Future<List<dynamic>>? _rewardsFuture;
 
@@ -78,6 +80,9 @@ class _ScanPageState extends State<ScanPage> {
           _userPoints = data['punti'];
           _userId = data['id'];
           _userName = data['nome'];
+          final cardLevel = data['card_level'];
+          _cardLevel =
+              cardLevel is Map ? Map<String, dynamic>.from(cardLevel) : null;
           _isLoadingPoints = false;
         });
       }
@@ -132,6 +137,10 @@ class _ScanPageState extends State<ScanPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildQiCard(),
+                  if (_cardLevel != null) ...[
+                    const SizedBox(height: 12),
+                    _buildCardLevelDetails(),
+                  ],
                   const SizedBox(height: 18),
                   const Text(
                     'Raccogli i punti con i tuoi acquisti e utilizzali per sbloccare fantastici premi! Per ottenere punti, ti basta inquadrare il Qr Code dalla cassa.',
@@ -297,6 +306,7 @@ class _ScanPageState extends State<ScanPage> {
           itemBuilder: (context, index) {
             final reward = rewards[index];
             final String rawImage = reward['immagine_url'] ?? '';
+            final String model3dUrl = reward['model3d_url'] ?? '';
             final int requiredPoints =
                 int.tryParse('${reward['punti_richiesti'] ?? 0}') ?? 0;
             final int currentPoints = _userPoints ?? 0;
@@ -328,32 +338,46 @@ class _ScanPageState extends State<ScanPage> {
               ),
               child: Row(
                 children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: AppColors.topBarOffers.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    clipBehavior: Clip.hardEdge,
-                    child:
-                        imageUrl != null
-                            ? Image.network(
-                              imageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder:
-                                  (context, error, stackTrace) => Icon(
-                                    Icons.error,
-                                    color: AppColors.topBarOffers,
-                                  ),
-                            )
-                            : Center(
-                              child: Icon(
-                                Icons.card_giftcard,
-                                color: AppColors.topBarOffers,
-                                size: 30,
+                  GestureDetector(
+                    onTap:
+                        model3dUrl.isNotEmpty
+                            ? () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder:
+                                    (_) => Reward3DPage(
+                                      title: reward['titolo'] ?? 'Premio',
+                                      model3dUrl: model3dUrl,
+                                    ),
                               ),
-                            ),
+                            )
+                            : null,
+                    child: Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: AppColors.topBarOffers.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      clipBehavior: Clip.hardEdge,
+                      child:
+                          imageUrl != null
+                              ? Image.network(
+                                imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder:
+                                    (context, error, stackTrace) => Icon(
+                                      Icons.error,
+                                      color: AppColors.topBarOffers,
+                                    ),
+                              )
+                              : Center(
+                                child: Icon(
+                                  Icons.card_giftcard,
+                                  color: AppColors.topBarOffers,
+                                  size: 30,
+                                ),
+                              ),
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -434,29 +458,67 @@ class _ScanPageState extends State<ScanPage> {
   }
 
   Widget _buildQiCard() {
+    final primaryColor = _cardColor(
+      _cardLevel?['primary_color'],
+      const Color(0xFFE9B416),
+    );
+    final secondaryColor = _cardColor(
+      _cardLevel?['secondary_color'],
+      const Color(0xFFFBEAD2),
+    );
+    final backgroundPath = _cardLevel?['background_image_url'] as String?;
+    final backgroundUrl =
+        backgroundPath == null || backgroundPath.isEmpty
+            ? null
+            : (backgroundPath.startsWith('http')
+                ? backgroundPath
+                : '${ApiService.serverUrl}${backgroundPath.startsWith('/') ? '' : '/'}$backgroundPath');
+
     return AspectRatio(
       aspectRatio: 359 / 219,
       child: Container(
         width: double.infinity,
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: const Color(0xFFE9B416),
+          color: primaryColor,
           borderRadius: BorderRadius.circular(30),
         ),
         child: Stack(
           children: [
-            Positioned(
-              right: -60,
-              top: -50,
-              bottom: -50,
-              child: Container(
-                width: 280,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFBEAD2),
-                  shape: BoxShape.circle,
+            if (backgroundUrl != null)
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 0.70,
+                  child: Image.network(
+                    backgroundUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder:
+                        (context, error, stackTrace) => const SizedBox.shrink(),
+                  ),
                 ),
               ),
-            ),
+            if (backgroundUrl == null)
+              Positioned.fill(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final diameter = constraints.maxHeight;
+                    return Align(
+                      alignment: Alignment.centerRight,
+                      child: FractionalTranslation(
+                        translation: const Offset(0.5, 0),
+                        child: Container(
+                          width: diameter,
+                          height: diameter,
+                          decoration: BoxDecoration(
+                            color: secondaryColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
             Padding(
               padding: const EdgeInsets.all(24.0),
               child: Row(
@@ -484,14 +546,29 @@ class _ScanPageState extends State<ScanPage> {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            const Text(
-                              'Qi Card',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Open Sauce',
-                              ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Qi Card',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Open Sauce',
+                                  ),
+                                ),
+                                if (_cardLevel != null)
+                                  Text(
+                                    _cardLevel?['name'] ?? '',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Open Sauce',
+                                    ),
+                                  ),
+                              ],
                             ),
                           ],
                         ),
@@ -517,7 +594,7 @@ class _ScanPageState extends State<ScanPage> {
                                   fontSize: 27,
                                 ),
                               ),
-                              const TextSpan(text: ' punti\ndisponibili'),
+                              const TextSpan(text: ' qi points\ndisponibili'),
                             ],
                           ),
                         ),
@@ -578,6 +655,60 @@ class _ScanPageState extends State<ScanPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildCardLevelDetails() {
+    final levelName = _cardLevel?['name'] as String? ?? 'Cliente';
+    final discount = _cardLevel?['discount_label'] as String?;
+    final description = _cardLevel?['description'] as String?;
+    final detail = [
+      discount,
+      description,
+    ].where((value) => value != null && value.trim().isNotEmpty).join(' · ');
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: _cardColor(
+          _cardLevel?['primary_color'],
+          const Color(0xFFE9B416),
+        ).withOpacity(0.10),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Cliente $levelName',
+            style: const TextStyle(
+              color: Color(0xFF1F2937),
+              fontFamily: 'Open Sauce',
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+            ),
+          ),
+          if (detail.isNotEmpty) ...[
+            const SizedBox(height: 3),
+            Text(
+              detail,
+              style: const TextStyle(
+                color: Color(0xFF4B5563),
+                fontFamily: 'Open Sauce',
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Color _cardColor(dynamic value, Color fallback) {
+    if (value is! String || !RegExp(r'^#[0-9A-Fa-f]{6}$').hasMatch(value)) {
+      return fallback;
+    }
+    return Color(int.parse(value.substring(1), radix: 16) + 0xFF000000);
   }
 }
 

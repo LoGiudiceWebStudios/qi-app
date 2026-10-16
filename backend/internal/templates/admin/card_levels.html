@@ -1,0 +1,125 @@
+{{ template "layout_top" . }}
+
+<div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div>
+        <h2 class="text-2xl font-semibold text-gray-800">Livelli cliente</h2>
+        <p class="mt-1 text-sm text-gray-500">Crea le card fedeltà e assegna i livelli dalla sezione Utenti.</p>
+    </div>
+</div>
+
+{{ if .Error }}
+<div class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">Operazione non completata. Controlla i dati e riprova.</div>
+{{ end }}
+
+<div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
+    <section class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+        <h3 class="mb-4 text-lg font-semibold text-gray-800">Nuovo livello</h3>
+        <form id="level-form" action="/admin/card-levels" method="POST" enctype="multipart/form-data" class="space-y-4">
+            <div>
+                <label class="mb-1 block text-sm font-medium text-gray-700">Nome livello</label>
+                <input id="level-name" type="text" name="name" required maxlength="100" placeholder="Es. Platinum" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="mb-1 block text-sm font-medium text-gray-700">Descrizione vantaggio</label>
+                <textarea id="level-description" name="description" rows="2" placeholder="Vantaggi riservati ai clienti fidelizzati" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"></textarea>
+            </div>
+            <div>
+                <label class="mb-1 block text-sm font-medium text-gray-700">Sconto / beneficio</label>
+                <input id="level-discount" type="text" name="discount_label" maxlength="100" placeholder="Es. Sconto fisso 10%" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <label class="block text-sm font-medium text-gray-700">Colore principale
+                    <input id="level-primary" type="color" name="primary_color" value="#E9B416" class="mt-1 h-11 w-full cursor-pointer rounded border border-gray-300 p-1">
+                </label>
+                <label class="block text-sm font-medium text-gray-700">Colore dettaglio
+                    <input id="level-secondary" type="color" name="secondary_color" value="#FBEAD2" class="mt-1 h-11 w-full cursor-pointer rounded border border-gray-300 p-1">
+                </label>
+            </div>
+            <div>
+                <label class="mb-1 block text-sm font-medium text-gray-700">Immagine di sfondo (facoltativa)</label>
+                <input id="level-background" type="file" name="background_image" accept="image/*" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm">
+            </div>
+            <button type="submit" class="w-full rounded-md bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700">Crea livello</button>
+        </form>
+    </section>
+
+    <section class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+        <h3 class="mb-4 text-lg font-semibold text-gray-800">Anteprima Qi Card</h3>
+        <div id="card-preview" class="relative flex min-h-52 overflow-hidden rounded-3xl p-5 text-gray-900 shadow" style="background-color:#E9B416">
+            <div id="card-preview-image" class="absolute inset-0 bg-cover bg-center"></div>
+            <div id="card-preview-overlay" class="absolute inset-0"></div>
+            <div class="relative z-10 flex w-full flex-col justify-between">
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-widest text-white">Qi Card</div>
+                    <div id="preview-name" class="mt-1 text-lg font-bold text-white">Nome livello</div>
+                    <div id="preview-discount" class="mt-1 text-sm font-semibold">Sconto o vantaggio</div>
+                </div>
+                <div class="text-sm font-bold">Hai 10 punti disponibili</div>
+            </div>
+            <div id="preview-circle" class="absolute -right-10 -top-8 h-52 w-40 rounded-full"></div>
+        </div>
+        <p id="preview-description" class="mt-3 text-sm text-gray-600">La descrizione del vantaggio apparirà qui.</p>
+    </section>
+</div>
+
+<section class="mt-8 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+    <div class="border-b border-gray-200 px-5 py-4">
+        <h3 class="text-lg font-semibold text-gray-800">Livelli esistenti</h3>
+    </div>
+    <div class="divide-y divide-gray-200">
+        {{ range .Levels }}
+        <div class="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex min-w-0 items-center gap-3">
+                <div class="relative h-12 w-16 overflow-hidden rounded-xl" style="background-color:{{ .PrimaryColor }}">
+                    {{ if .BackgroundImageURL }}<img src="{{ .BackgroundImageURL }}" alt="" class="absolute inset-0 h-full w-full object-cover">{{ end }}
+                    <div class="absolute -right-2 -top-2 h-14 w-10 rounded-full" style="background-color:{{ .SecondaryColor }}"></div>
+                </div>
+                <div class="min-w-0">
+                    <div class="font-semibold text-gray-900">{{ .Name }}</div>
+                    <div class="text-sm text-gray-500">{{ if .DiscountLabel }}{{ .DiscountLabel }}{{ else }}Nessuno sconto impostato{{ end }}</div>
+                </div>
+            </div>
+            <div class="flex shrink-0 gap-2">
+                <a href="/admin/card-levels/{{ .ID }}/edit" class="rounded border border-blue-300 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50">Modifica</a>
+                <form action="/admin/card-levels/{{ .ID }}/delete" method="POST" onsubmit="return confirm('Eliminare questo livello? Gli utenti assegnati verranno riportati alla card standard.');">
+                    <button type="submit" class="rounded border border-red-300 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50">Elimina</button>
+                </form>
+            </div>
+        </div>
+        {{ else }}
+        <p class="p-5 text-sm text-gray-500">Non ci sono ancora livelli personalizzati.</p>
+        {{ end }}
+    </div>
+</section>
+
+<script>
+(() => {
+    const name = document.getElementById('level-name');
+    const description = document.getElementById('level-description');
+    const discount = document.getElementById('level-discount');
+    const primary = document.getElementById('level-primary');
+    const secondary = document.getElementById('level-secondary');
+    const background = document.getElementById('level-background');
+    const preview = document.getElementById('card-preview');
+    const imageLayer = document.getElementById('card-preview-image');
+    const overlay = document.getElementById('card-preview-overlay');
+    const circle = document.getElementById('preview-circle');
+
+    function refreshPreview() {
+        preview.style.backgroundColor = primary.value;
+        circle.style.backgroundColor = secondary.value;
+        overlay.style.backgroundColor = primary.value + '55';
+        document.getElementById('preview-name').textContent = name.value || 'Nome livello';
+        document.getElementById('preview-description').textContent = description.value || 'La descrizione del vantaggio apparirà qui.';
+        document.getElementById('preview-discount').textContent = discount.value || 'Sconto o vantaggio';
+    }
+    [name, description, discount, primary, secondary].forEach((input) => input.addEventListener('input', refreshPreview));
+    background.addEventListener('change', () => {
+        const file = background.files && background.files[0];
+        imageLayer.style.backgroundImage = file ? `url(${URL.createObjectURL(file)})` : '';
+    });
+    refreshPreview();
+})();
+</script>
+
+{{ template "layout_bottom" . }}

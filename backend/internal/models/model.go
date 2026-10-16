@@ -17,9 +17,24 @@ type User struct {
 	Provider           string         `gorm:"size:50" json:"provider,omitempty"`
 	Ruolo              string         `gorm:"size:50;default:'user'" json:"ruolo"` // "admin" o "user"
 	Punti              int            `gorm:"default:0" json:"punti"`
+	CardLevelID        *uint          `json:"card_level_id"`
+	CardLevel          *CardLevel     `gorm:"foreignKey:CardLevelID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"card_level,omitempty"`
 	FCMToken           string         `gorm:"type:text" json:"fcm_token,omitempty"` // Per push notification
 	ResetCode          *string        `gorm:"size:4" json:"-"`
 	ResetCodeExpiresAt *time.Time     `json:"-"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
+	DeletedAt          gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+type CardLevel struct {
+	ID                 uint           `gorm:"primaryKey" json:"id"`
+	Name               string         `gorm:"size:100;not null;uniqueIndex" json:"name"`
+	Description        string         `gorm:"type:text" json:"description"`
+	DiscountLabel      string         `gorm:"size:100" json:"discount_label"`
+	PrimaryColor       string         `gorm:"size:7;not null;default:'#E9B416'" json:"primary_color"`
+	SecondaryColor     string         `gorm:"size:7;not null;default:'#FBEAD2'" json:"secondary_color"`
+	BackgroundImageURL string         `gorm:"type:text" json:"background_image_url"`
 	CreatedAt          time.Time      `json:"created_at"`
 	UpdatedAt          time.Time      `json:"updated_at"`
 	DeletedAt          gorm.DeletedAt `gorm:"index" json:"-"`
@@ -103,6 +118,8 @@ type Reward struct {
 	Descrizione    string         `gorm:"type:text;not null" json:"descrizione"`
 	PuntiRichiesti int            `gorm:"not null" json:"punti_richiesti"`
 	ImmagineURL    string         `gorm:"type:text" json:"immagine_url"`
+	Model3dURL     string         `gorm:"type:text" json:"model3d_url"`
+	Model3dIOSURL  string         `gorm:"type:text" json:"model3d_ios_url"`
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
 	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`

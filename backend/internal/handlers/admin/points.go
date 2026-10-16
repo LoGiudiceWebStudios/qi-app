@@ -128,15 +128,16 @@ func (h *PointsHandler) GetUserPoints(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := database.DB.First(&user, userID).Error; err != nil {
+	if err := database.DB.Preload("CardLevel").First(&user, userID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Utente non trovato"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"id":      user.ID,
-		"name":    user.Nome,
-		"punti":   user.Punti,
+		"success":    true,
+		"id":         user.ID,
+		"name":       user.Nome,
+		"punti":      user.Punti,
+		"card_level": user.CardLevel,
 	})
 }

@@ -61,10 +61,17 @@ func (h *DashboardHandler) RenderDashboard(c *gin.Context) {
 		log.Printf("Errore conteggio offerte attive: %v", err)
 	}
 
+	// GORM esclude automaticamente i soft-deleted (DeletedAt) da questo conteggio.
+	var totalUsers int64
+	if err := database.DB.Model(&models.User{}).Where("ruolo = ?", "user").Count(&totalUsers).Error; err != nil {
+		log.Printf("Errore conteggio utenti registrati: %v", err)
+	}
+
 	data := gin.H{
 		"Title":               "Dashboard Qi App",
 		"TotalEvents":         totalEvents,
 		"TotalOffers":         totalOffers,
+		"TotalUsers":          totalUsers,
 		"ForcedStatus":        forcedStatus.Value,
 		"VenueSchedule":       venueSchedule.Value,
 		"ForcedKitchenStatus": forcedKitchenStatus.Value,

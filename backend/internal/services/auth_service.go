@@ -255,7 +255,7 @@ func (s *AuthService) SocialLogin(req models.SocialLoginRequest) (string, *model
 }
 func (s *AuthService) GetProfile(userID uint) (*models.User, error) {
 	var user models.User
-	if err := database.DB.Select("id", "nome", "cognome", "email", "telefono", "ruolo", "punti").First(&user, userID).Error; err != nil {
+	if err := database.DB.Select("id", "nome", "cognome", "email", "telefono", "ruolo", "punti", "card_level_id").Preload("CardLevel").First(&user, userID).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil

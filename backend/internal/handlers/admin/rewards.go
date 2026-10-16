@@ -53,6 +53,18 @@ func (h *RewardsHandler) CreateGet(c *gin.Context) {
 	})
 }
 
+func (h *RewardsHandler) EditGet(c *gin.Context) {
+	var reward models.Reward
+	if err := database.DB.First(&reward, c.Param("id")).Error; err != nil {
+		c.String(http.StatusNotFound, "Premio non trovato")
+		return
+	}
+	c.HTML(http.StatusOK, "reward_edit.html", gin.H{
+		"Title":  "Modifica Premio",
+		"Reward": reward,
+	})
+}
+
 func (h *RewardsHandler) CreatePost(c *gin.Context) {
 	titolo := c.PostForm("titolo")
 	descrizione := c.PostForm("descrizione")
@@ -97,11 +109,20 @@ func (h *RewardsHandler) CreatePost(c *gin.Context) {
 		return
 	}
 
+	model3dURL, err := saveRewardModel(c, "modello_3d", "uploads/models3d", "", ".glb", ".gltf")
+	if err != nil {
+		c.HTML(http.StatusOK, "reward_new.html", gin.H{
+			"Title": "Nuovo Premio",
+			"Error": err.Error(),
+		})
+		return
+	}
 	reward := models.Reward{
 		Titolo:         titolo,
 		Descrizione:    descrizione,
 		PuntiRichiesti: punti,
 		ImmagineURL:    immagineURL, // Può essere implementato l'upload immagine
+		Model3dURL:     model3dURL,
 	}
 
 	if err := database.DB.Create(&reward).Error; err != nil {
@@ -126,6 +147,96 @@ func (h *RewardsHandler) CreatePost(c *gin.Context) {
 	}
 
 	c.Redirect(http.StatusSeeOther, "/admin/rewards")
+}
+
+func saveRewardModel(c *gin.Context, fieldName, directory, prefix string, allowedExtensions ...string) (string, error) {
+	file, err := c.FormFile(fieldName)
+	if err == http.ErrMissingFile {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("errore durante la lettura del modello 3D")
+	}
+
+	extension := strings.ToLower(filepath.Ext(file.Filename))
+	allowed := false
+	for _, candidate := range allowedExtensions {
+		if extension == candidate {
+			allowed = true
+			break
+		}
+	}
+	if !allowed {
+		return "", fmt.Errorf("formato non valido per il file %s", fieldName)
+	}
+	if err := os.MkdirAll(directory, os.ModePerm); err != nil {
+		return "", fmt.Errorf("impossibile preparare il salvataggio del modello 3D")
+	}
+
+	filename := fmt.Sprintf("%d_%s%s", time.Now().UnixNano(), prefix, filepath.Base(file.Filename))
+	path := filepath.Join(directory, filename)
+	if err := c.SaveUploadedFile(file, path); err != nil {
+		return "", fmt.Errorf("upload del modello 3D non riuscito")
+	}
+	return "/" + filepath.ToSlash(path), nil
+}
+
+func (h *RewardsHandler) UpdatePost(c *gin.Context) {
+	var reward models.Reward
+	if err := database.DB.First(&reward, c.Param("id")).Error; err != nil {
+		c.String(http.StatusNotFound, "Premio non trovato")
+		return
+	}
+
+	reward.Titolo = c.PostForm("titolo")
+	reward.Descrizione = c.PostForm("descrizione")
+	punti, err := strconv.Atoi(c.PostForm("punti_richiesti"))
+	if err != nil || punti < 1 {
+		renderRewardEditError(c, reward, "Inserisci un numero di punti valido.")
+		return
+	}
+	reward.PuntiRichiesti = punti
+
+	image, imageErr := c.FormFile("immagine")
+	if imageErr == nil {
+		if err := os.MkdirAll("uploads/rewards", os.ModePerm); err != nil {
+			renderRewardEditError(c, reward, "Impossibile preparare il salvataggio dell'immagine.")
+			return
+		}
+		filename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), filepath.Base(image.Filename))
+		outPath := filepath.Join("uploads/rewards", filename)
+		finalPath, err := services.CompressAndSaveImage(image, outPath)
+		if err != nil {
+			renderRewardEditError(c, reward, "Upload immagine non riuscito. Prova con un file JPG o PNG.")
+			return
+		}
+		reward.ImmagineURL = "/" + filepath.ToSlash(finalPath)
+	} else if imageErr != http.ErrMissingFile {
+		renderRewardEditError(c, reward, "Errore durante la lettura del file immagine.")
+		return
+	}
+
+	model3dURL, err := saveRewardModel(c, "modello_3d", "uploads/models3d", "", ".glb", ".gltf")
+	if err != nil {
+		renderRewardEditError(c, reward, err.Error())
+		return
+	}
+	if model3dURL != "" {
+		reward.Model3dURL = model3dURL
+	}
+	if err := database.DB.Save(&reward).Error; err != nil {
+		renderRewardEditError(c, reward, "Errore durante il salvataggio del premio.")
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/admin/rewards")
+}
+
+func renderRewardEditError(c *gin.Context, reward models.Reward, message string) {
+	c.HTML(http.StatusOK, "reward_edit.html", gin.H{
+		"Title":  "Modifica Premio",
+		"Reward": reward,
+		"Error":  message,
+	})
 }
 
 func (h *RewardsHandler) Delete(c *gin.Context) {

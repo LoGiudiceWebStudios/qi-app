@@ -273,14 +273,30 @@ class _HomePageState extends ConsumerState<HomePage> {
                   itemsCount: homeData.events.length,
                   itemBuilder: (context, index) {
                     final event = homeData.events[index];
-                    return CustomCardWidget(
-                      borderColor: greenColor,
-                      imageUrl:
-                          (event.imageUrl.isNotEmpty)
-                              ? (event.imageUrl.startsWith('http')
-                                  ? event.imageUrl
-                                  : "${ApiService.serverUrl}${event.imageUrl.startsWith('/') ? '' : '/'}${event.imageUrl.replaceAll('\\', '/')}")
-                              : null,
+                    return GestureDetector(
+                      onTap: () async {
+                        final token = await SecureStorageService.getToken();
+                        if (!context.mounted) return;
+                        if (token == null) {
+                          _showLoginRequiredMessage();
+                          return;
+                        }
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder:
+                                (_) => EventsPage(initialEventId: event.id),
+                          ),
+                        );
+                      },
+                      child: CustomCardWidget(
+                        borderColor: greenColor,
+                        imageUrl:
+                            (event.imageUrl.isNotEmpty)
+                                ? (event.imageUrl.startsWith('http')
+                                    ? event.imageUrl
+                                    : "${ApiService.serverUrl}${event.imageUrl.startsWith('/') ? '' : '/'}${event.imageUrl.replaceAll('\\', '/')}")
+                                : null,
+                      ),
                     );
                   },
                 ),

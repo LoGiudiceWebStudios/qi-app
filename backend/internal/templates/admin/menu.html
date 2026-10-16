@@ -16,7 +16,8 @@
                 <button type="submit" id="btn-cat-submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium transition-colors w-full">Aggiungi Categoria</button>
             </form>
             
-            <table class="w-full text-left border-collapse">
+            <div class="overflow-x-auto">
+            <table class="min-w-[700px] w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-gray-50 border-b border-gray-200 text-sm text-gray-500 uppercase tracking-wider">
                         <th class="px-6 py-3 font-medium w-16">Foto</th>
@@ -41,6 +42,7 @@
                     {{ end }}
                 </tbody>
             </table>
+            </div>
         </div>
     </div>
 
@@ -75,7 +77,8 @@
                 </div>
             </form>
 
-            <table class="w-full text-left border-collapse">
+            <div class="overflow-x-auto">
+            <table class="min-w-[700px] w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-gray-50 border-b border-gray-200 text-sm text-gray-500 uppercase tracking-wider">
                         <th class="px-6 py-3 font-medium">Ordine</th>
@@ -97,6 +100,7 @@
                     {{ end }}
                 </tbody>
             </table>
+            </div>
         </div>
     </div>
 </div>

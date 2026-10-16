@@ -1,0 +1,43 @@
+{{ template "layout_top" . }}
+
+<div class="mx-auto max-w-3xl rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+    <div class="mb-5 flex items-center justify-between gap-3">
+        <h2 class="text-xl font-semibold text-gray-800">Modifica livello: {{ .Level.Name }}</h2>
+        <a href="/admin/card-levels" class="text-sm font-medium text-gray-600 hover:text-gray-900">Torna ai livelli</a>
+    </div>
+    {{ if .Error }}<div class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ .Error }}</div>{{ end }}
+    <form action="/admin/card-levels/{{ .Level.ID }}/edit" method="POST" enctype="multipart/form-data" class="space-y-4">
+        <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">Nome livello</label>
+            <input type="text" name="name" value="{{ .Level.Name }}" required maxlength="100" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+        </div>
+        <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">Descrizione</label>
+            <textarea name="description" rows="3" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm">{{ .Level.Description }}</textarea>
+        </div>
+        <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">Sconto / beneficio</label>
+            <input type="text" name="discount_label" value="{{ .Level.DiscountLabel }}" maxlength="100" placeholder="Es. Sconto fisso 10%" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+        </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label class="block text-sm font-medium text-gray-700">Colore principale
+                <input type="color" name="primary_color" value="{{ .Level.PrimaryColor }}" class="mt-1 h-11 w-full rounded border border-gray-300 p-1">
+            </label>
+            <label class="block text-sm font-medium text-gray-700">Colore dettaglio
+                <input type="color" name="secondary_color" value="{{ .Level.SecondaryColor }}" class="mt-1 h-11 w-full rounded border border-gray-300 p-1">
+            </label>
+        </div>
+        <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">Immagine di sfondo</label>
+            {{ if .Level.BackgroundImageURL }}<img src="{{ .Level.BackgroundImageURL }}" alt="Sfondo attuale" class="mb-2 h-28 w-full rounded-lg object-cover">{{ end }}
+            <input type="file" name="background_image" accept="image/*" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm">
+            <p class="mt-1 text-xs text-gray-500">Lascia vuoto per mantenere l'immagine attuale.</p>
+        </div>
+        <div class="flex justify-end gap-3 border-t border-gray-200 pt-4">
+            <a href="/admin/card-levels" class="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">Annulla</a>
+            <button type="submit" class="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700">Salva livello</button>
+        </div>
+    </form>
+</div>
+
+{{ template "layout_bottom" . }}

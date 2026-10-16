@@ -7,8 +7,9 @@
     </a>
 </div>
 
-<div class="bg-white rounded-lg shadow overflow-hidden">
-    <table class="min-w-full leading-normal">
+<div class="bg-white rounded-lg shadow">
+    <div class="overflow-x-auto">
+        <table class="min-w-[700px] w-full leading-normal">
         <thead>
             <tr>
                 <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Immagine</th>
@@ -32,6 +33,7 @@
                 <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm whitespace-pre-line">{{ .Descrizione }}</td>
                 <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-green-600 font-bold">{{ .PuntiRichiesti }}</td>
                 <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right">
+                    <a href="/admin/rewards/{{ .ID }}/edit" class="text-blue-600 hover:text-blue-800 font-semibold px-2 py-1 border border-blue-500 rounded hover:bg-blue-50 transition">Modifica</a>
                     <form action="/admin/rewards/{{ .ID }}/delete" method="POST" onsubmit="return confirm('Sei sicuro di voler eliminare questo premio?');">
                         <button type="submit" class="text-red-500 hover:text-red-700 font-semibold px-2 py-1 border border-red-500 rounded hover:bg-red-50 transition">Elimina</button>
                     </form>
@@ -43,7 +45,8 @@
             </tr>
             {{ end }}
         </tbody>
-    </table>
+        </table>
+    </div>
 </div>
 
 {{ template "layout_bottom" . }}

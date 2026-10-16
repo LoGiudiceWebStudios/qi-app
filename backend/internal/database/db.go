@@ -48,6 +48,7 @@ func Connect() {
 
 	log.Println("Sincronizzazione tabelle (AutoMigrate)...")
 	err = db.AutoMigrate(
+		&models.CardLevel{},
 		&models.User{},
 		&models.Event{},
 		&models.Offer{},

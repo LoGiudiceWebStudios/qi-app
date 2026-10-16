@@ -56,6 +56,8 @@
                 <div class="p-4 bg-green-50 border border-green-200 rounded-md">
                     <p class="text-sm font-medium text-green-800">Utente riconosciuto:</p>
                     <p class="text-lg font-bold text-gray-900" id="scannedUserName">-</p>
+                    <p class="mt-1 text-sm font-semibold text-indigo-700" id="scannedUserLevel">Livello Standard</p>
+                    <p class="text-sm text-gray-700" id="scannedUserBenefit"></p>
                     <p class="text-sm text-gray-700">Saldo punti: <span class="font-bold text-xl" id="scannedUserPoints">0</span></p>
                 </div>
 
@@ -202,6 +204,9 @@
                     document.getElementById('scannedUserName').textContent = serverData.name || "Sconosciuto";
                     document.getElementById('scannedUserPoints').textContent = serverData.punti || 0;
                     document.getElementById('scannedUserId').value = serverData.id;
+                    const cardLevel = serverData.card_level;
+                    document.getElementById('scannedUserLevel').textContent = cardLevel ? `Cliente ${cardLevel.name}` : 'Livello Standard';
+                    document.getElementById('scannedUserBenefit').textContent = cardLevel ? [cardLevel.discount_label, cardLevel.description].filter(Boolean).join(' · ') : '';
                     
                     document.getElementById('punti_da_scalare').value = '';
                     document.getElementById('punti_da_scalare').max = serverData.punti;
