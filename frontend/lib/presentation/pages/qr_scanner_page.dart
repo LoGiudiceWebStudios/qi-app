@@ -43,11 +43,11 @@ class _QrScannerPageState extends State<QrScannerPage> {
                    backgroundColor: Colors.white,
                    surfaceTintColor: Colors.white,
                    title: const Text(
-                     'Punti Accreditati!',
+                     'Neuroni Accreditati!',
                      style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
                    ),
                    content: const Text(
-                     'I punti sono stati aggiunti al tuo saldo.',
+                     'I neuroni sono stati aggiunti al tuo saldo.',
                      style: TextStyle(color: Colors.black),
                    ),
                    actions: [

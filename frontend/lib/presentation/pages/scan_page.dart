@@ -143,7 +143,7 @@ class _ScanPageState extends State<ScanPage> {
                   ],
                   const SizedBox(height: 18),
                   const Text(
-                    'Raccogli i punti con i tuoi acquisti e utilizzali per sbloccare fantastici premi! Per ottenere punti, ti basta inquadrare il Qr Code dalla cassa.',
+                    'Raccogli i neuroni con i tuoi acquisti e utilizzali per sbloccare fantastici premi! Per ottenere punti, ti basta inquadrare il Qr Code dalla cassa.',
                     style: TextStyle(
                       fontSize: 14,
                       color: Color(0xFF374151),
@@ -159,7 +159,7 @@ class _ScanPageState extends State<ScanPage> {
                   ),
                   const SizedBox(height: 24),
                   const Text(
-                    'Inserisci Punti',
+                    'Inserisci Neuroni',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -232,18 +232,18 @@ class _ScanPageState extends State<ScanPage> {
                   const _GuidaItem(
                     title: '1. Come funziona?',
                     content:
-                        'Per raccogliere punti, recati in cassa. Una volta effettuato il pagamento, chiedi il codice per la riscossione dei punti: il cassiere ti mostrerà un codice QR. Ti basterà scansionarlo tramite l\'app per aggiungerli al tuo saldo e sbloccare i premi sottostanti!',
+                        'Per raccogliere neuroni, recati in cassa. Una volta effettuato il pagamento, chiedi il codice per la riscossione dei punti: il cassiere ti mostrerà un codice QR. Ti basterà scansionarlo tramite l\'app per aggiungerli al tuo saldo e sbloccare i premi sottostanti!',
                     initiallyExpanded: true,
                   ),
                   const SizedBox(height: 14),
                   const _GuidaItem(
-                    title: '2. Quanti punti ottengo?',
+                    title: '2. Quanti neuroni ottengo?',
                     content:
-                        'L\'accumulo dei punti è proporzionale all\'importo della tua spesa. Inoltre, il sistema applica un moltiplicatore variabile che premia le tue consumazioni in specifiche fasce orarie della giornata.',
+                        'L\'accumulo dei neuroni è proporzionale all\'importo della tua spesa. Inoltre, il sistema applica un moltiplicatore variabile che premia le tue consumazioni in specifiche fasce orarie della giornata.',
                   ),
                   const SizedBox(height: 14),
                   const _GuidaItem(
-                    title: '3. Come uso i punti?',
+                    title: '3. Come uso i neuroni?',
                     content:
                         'Scorri verso il basso nella sezione "Premi" per scegliere la ricompensa che preferisci. Quando avrai saldo sufficiente potrai riscuotere il tuo premio in cassa!',
                   ),
@@ -594,7 +594,7 @@ class _ScanPageState extends State<ScanPage> {
                                   fontSize: 27,
                                 ),
                               ),
-                              const TextSpan(text: ' qi points\ndisponibili'),
+                              const TextSpan(text: ' neuroni\ndisponibili'),
                             ],
                           ),
                         ),
