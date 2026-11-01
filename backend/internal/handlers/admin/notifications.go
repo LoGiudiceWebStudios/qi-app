@@ -44,12 +44,10 @@ func (h *NotificationsHandler) SendPost(c *gin.Context) {
 		tokens = append(tokens, u.FCMToken)
 	}
 
-	if len(tokens) > 0 {
-		err := services.SendMulticastNotification(titolo, messaggio, tokens)
-		if err != nil {
-			c.String(http.StatusInternalServerError, "Errore durante l'invio delle notifiche: "+err.Error())
-			return
-		}
+	err := services.SendMulticastNotification(titolo, messaggio, tokens)
+	if err != nil && len(tokens) > 0 {
+		c.String(http.StatusInternalServerError, "Errore durante l'invio delle notifiche: "+err.Error())
+		return
 	}
 
 	c.Redirect(http.StatusSeeOther, "/admin/notifications?success=1&count="+strconv.Itoa(len(tokens)))

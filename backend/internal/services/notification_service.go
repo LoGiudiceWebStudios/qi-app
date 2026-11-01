@@ -38,8 +38,17 @@ func InitFirebase() {
 	fmt.Println("Firebase Cloud Messaging (FCM) inizializzato con successo!")
 }
 
-// SendMulticastNotification invia una notifica push a una lista di token.
+// SendMulticastNotification invia una notifica push a una lista di token e la salva nello storico.
 func SendMulticastNotification(title, body string, tokens []string) error {
+	if database.DB != nil && strings.TrimSpace(title) != "" && strings.TrimSpace(body) != "" {
+		if err := database.DB.Create(&models.SentNotification{
+			Title:   strings.TrimSpace(title),
+			Message: strings.TrimSpace(body),
+		}).Error; err != nil {
+			log.Printf("Errore salvataggio storico notifica: %v\n", err)
+		}
+	}
+
 	if FCMClient == nil {
 		return fmt.Errorf("FCMClient non inizializzato")
 	}
@@ -68,16 +77,30 @@ func SendMulticastNotification(title, body string, tokens []string) error {
 				"apns-priority": "10",
 			},
 		},
-		Tokens: tokens,
 	}
 
 	ctx := context.Background()
-	response, err := FCMClient.SendEachForMulticast(ctx, message)
-	if err != nil {
-		return err
+	var totalSuccesses, totalFailures int
+	var firstErr error
+	for start := 0; start < len(tokens); start += 500 {
+		end := start + 500
+		if end > len(tokens) {
+			end = len(tokens)
+		}
+		message.Tokens = tokens[start:end]
+
+		response, err := FCMClient.SendEachForMulticast(ctx, message)
+		if err != nil {
+			if firstErr == nil {
+				firstErr = err
+			}
+			continue
+		}
+		totalSuccesses += response.SuccessCount
+		totalFailures += response.FailureCount
 	}
-	fmt.Printf("Notifiche inviate: successi %d, fallimenti %d\n", response.SuccessCount, response.FailureCount)
-	return nil
+	fmt.Printf("Notifiche inviate: successi %d, fallimenti %d\n", totalSuccesses, totalFailures)
+	return firstErr
 }
 
 // StartCronJobs avvia le notifiche programmate (es. ogni martedi alle 12)
@@ -131,8 +154,6 @@ func scheduleLocalNotification(n models.ScheduledNotification) {
 			tokens = append(tokens, u.FCMToken)
 		}
 
-		if len(tokens) > 0 {
-			SendMulticastNotification(n.Title, n.Message, tokens)
-		}
+		SendMulticastNotification(n.Title, n.Message, tokens)
 	})
 }

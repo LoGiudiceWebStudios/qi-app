@@ -34,7 +34,6 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   // Future per caricare dati Home combinando tutto e gestendo orari
   late Future<HomeData> _homeDataFuture;
-  bool _openRewards = false;
 
   @override
   void initState() {
@@ -67,9 +66,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         children: [
           selectedIndex == 0 ? _buildHomeTab(context) : const SizedBox.shrink(),
           selectedIndex == 1 ? const OfferPage() : const SizedBox.shrink(),
-          selectedIndex == 2
-              ? ScanPage(openRewards: _openRewards)
-              : const SizedBox.shrink(),
+          selectedIndex == 2 ? const ScanPage() : const SizedBox.shrink(),
           selectedIndex == 3 ? const MenuPage() : const SizedBox.shrink(),
           selectedIndex == 4 ? const ProfilePage() : const SizedBox.shrink(),
         ],
@@ -79,7 +76,6 @@ class _HomePageState extends ConsumerState<HomePage> {
         child: FloatingNavBar(
           currentIndex: selectedIndex,
           onTap: (index) async {
-            setState(() => _openRewards = false);
             if (index == 0) {
               setState(() {
                 _homeDataFuture = HomeApi().fetchHomeData();
@@ -178,18 +174,19 @@ class _HomePageState extends ConsumerState<HomePage> {
                         ),
                         const SizedBox(width: 12),
                         _buildQuickActionButton(
-                          'Premi',
-                          Icons.card_giftcard_outlined,
+                          'Eventi',
+                          Icons.calendar_month_outlined,
                           purpleColor,
                           onTap: () async {
                             final token = await SecureStorageService.getToken();
                             if (token == null) {
                               _showLoginRequiredMessage();
                             } else {
-                              setState(() => _openRewards = true);
-                              ref
-                                  .read(bottomNavIndexProvider.notifier)
-                                  .setIndex(2);
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const EventsPage(),
+                                ),
+                              );
                             }
                           },
                         ),
@@ -201,105 +198,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
               const SizedBox(height: 36),
 
-              // OFFERTE
-              if (homeData.offers.isEmpty)
-                Column(
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 24),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Offerte',
-                          style: TextStyle(
-                            fontFamily: 'Open Sauce',
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF1F2937),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 24.0),
-                        child: Text(
-                          'Nessuna offerta in corso',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              else
-                _buildHorizontalSection(
-                  title: 'Offerte',
-                  actionText: 'Vedi tutto',
-                  actionColor: yellowColor,
-                  itemsCount: homeData.offers.length,
-                  itemBuilder: (context, index) {
-                    final offer = homeData.offers[index];
-                    return CustomCardWidget(
-                      borderColor: yellowColor,
-                      imageUrl:
-                          (offer.imageUrl.isNotEmpty)
-                              ? (offer.imageUrl.startsWith('http')
-                                  ? offer.imageUrl
-                                  : "${ApiService.serverUrl}${offer.imageUrl.startsWith('/') ? '' : '/'}${offer.imageUrl.replaceAll('\\', '/')}")
-                              : null,
-                    );
-                  },
-                ),
-
-              const SizedBox(height: 36),
-
-              // EVENTI COLLEGATI AL BACKEND
-              if (homeData.events.isEmpty)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Text(
-                      'Nessun evento in programma',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                )
-              else
-                _buildHorizontalSection(
-                  title: 'Eventi',
-                  actionText: 'Vedi tutto',
-                  actionColor: greenColor,
-                  itemsCount: homeData.events.length,
-                  itemBuilder: (context, index) {
-                    final event = homeData.events[index];
-                    return GestureDetector(
-                      onTap: () async {
-                        final token = await SecureStorageService.getToken();
-                        if (!context.mounted) return;
-                        if (token == null) {
-                          _showLoginRequiredMessage();
-                          return;
-                        }
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder:
-                                (_) => EventsPage(initialEventId: event.id),
-                          ),
-                        );
-                      },
-                      child: CustomCardWidget(
-                        borderColor: greenColor,
-                        imageUrl:
-                            (event.imageUrl.isNotEmpty)
-                                ? (event.imageUrl.startsWith('http')
-                                    ? event.imageUrl
-                                    : "${ApiService.serverUrl}${event.imageUrl.startsWith('/') ? '' : '/'}${event.imageUrl.replaceAll('\\', '/')}")
-                                : null,
-                      ),
-                    );
-                  },
-                ),
+              ..._buildOrderedHomeSections(context, homeData),
 
               const SizedBox(height: 120),
             ],
@@ -307,6 +206,110 @@ class _HomePageState extends ConsumerState<HomePage> {
         );
       },
     );
+  }
+
+  List<Widget> _buildOrderedHomeSections(
+    BuildContext context,
+    HomeData homeData,
+  ) {
+    final sections = <({bool hasItems, Widget widget})>[
+      (
+        hasItems: homeData.offers.isNotEmpty,
+        widget: _buildHorizontalSection(
+          title: 'Offerte',
+          actionText: 'Vedi tutto',
+          actionColor: yellowColor,
+          itemsCount: homeData.offers.length,
+          emptyText: 'Nessuna offerta in corso',
+          itemBuilder: (context, index) {
+            final offer = homeData.offers[index];
+            return Stack(
+              children: [
+                Opacity(
+                  opacity: offer.isActive ? 1 : 0.62,
+                  child: CustomCardWidget(
+                    borderColor: yellowColor,
+                    imageUrl:
+                        (offer.imageUrl.isNotEmpty)
+                            ? (offer.imageUrl.startsWith('http')
+                                ? offer.imageUrl
+                                : "${ApiService.serverUrl}${offer.imageUrl.startsWith('/') ? '' : '/'}${offer.imageUrl.replaceAll('\\', '/')}")
+                            : null,
+                  ),
+                ),
+                if (!offer.isActive && offer.activationLabel.isNotEmpty)
+                  Positioned(
+                    left: 10,
+                    right: 10,
+                    bottom: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF8D8),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFE9B416)),
+                      ),
+                      child: Text(
+                        'Attiva ${offer.activationLabel}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF594500),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
+      (
+        hasItems: homeData.events.isNotEmpty,
+        widget: _buildHorizontalSection(
+          title: 'Eventi',
+          actionText: 'Vedi tutto',
+          actionColor: greenColor,
+          itemsCount: homeData.events.length,
+          emptyText: 'Nessun evento in programma',
+          itemBuilder: (context, index) {
+            final event = homeData.events[index];
+            return CustomCardWidget(
+              borderColor: greenColor,
+              imageUrl:
+                  (event.imageUrl.isNotEmpty)
+                      ? (event.imageUrl.startsWith('http')
+                          ? event.imageUrl
+                          : "${ApiService.serverUrl}${event.imageUrl.startsWith('/') ? '' : '/'}${event.imageUrl.replaceAll('\\', '/')}")
+                      : null,
+            );
+          },
+        ),
+      ),
+      (
+        hasItems: homeData.posts.isNotEmpty,
+        widget: _buildPostsSection(context, homeData.posts),
+      ),
+    ];
+
+    final ordered = [
+      ...sections.where((s) => s.hasItems),
+      ...sections.where((s) => !s.hasItems),
+    ];
+
+    final children = <Widget>[];
+    for (int i = 0; i < ordered.length; i++) {
+      if (i > 0) {
+        children.add(const SizedBox(height: 36));
+      }
+      children.add(ordered[i].widget);
+    }
+    return children;
   }
 
   Widget _buildTopHeader(BuildContext context, HomeData homeData) {
@@ -420,23 +423,19 @@ class _HomePageState extends ConsumerState<HomePage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            SizedBox(
-                              width: 22,
+                            Container(
+                              width: 18,
                               height: 18,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
                               child: Center(
-                                child: Container(
-                                  width: 18,
-                                  height: 18,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Image.asset(
-                                    'assets/icons/Logo.png',
-                                    width: 24,
-                                    height: 24,
-                                    fit: BoxFit.contain,
-                                  ),
+                                child: Image.asset(
+                                  'assets/icons/Logo.png',
+                                  width: 24,
+                                  height: 24,
+                                  fit: BoxFit.contain,
                                 ),
                               ),
                             ),
@@ -452,27 +451,18 @@ class _HomePageState extends ConsumerState<HomePage> {
                               ),
                             ),
                             const SizedBox(width: 6),
-                            SizedBox(
-                              width: 92,
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  homeData.isOpen
-                                      ? 'Locale Aperto'
-                                      : 'Locale Chiuso',
-                                  maxLines: 1,
-                                  softWrap: false,
-                                  style: const TextStyle(
-                                    fontFamily: 'Open Sauce',
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13,
-                                    color: Colors.black87,
-                                  ),
-                                ),
+                            Text(
+                              homeData.isOpen
+                                  ? 'Locale Aperto'
+                                  : 'Locale Chiuso',
+                              style: const TextStyle(
+                                fontFamily: 'Open Sauce',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: Colors.black87,
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             // Pallino grigio
                             Container(
                               width: 8,
@@ -483,21 +473,15 @@ class _HomePageState extends ConsumerState<HomePage> {
                               ),
                             ),
                             const SizedBox(width: 6),
-                            SizedBox(
-                              width: 94,
-                              child: Text(
-                                homeData.isOpen
-                                    ? 'Fino alle ${homeData.closingTime}'
-                                    : 'Apre alle ${homeData.openingTime}',
-                                maxLines: 1,
-                                softWrap: false,
-                                style: const TextStyle(
-                                  fontFamily: 'Open Sauce',
-                                  color: Colors.black54,
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 12,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                            Text(
+                              homeData.isOpen
+                                  ? 'Fino alle ${homeData.closingTime}'
+                                  : 'Apre alle ${homeData.openingTime}',
+                              style: const TextStyle(
+                                fontFamily: 'Open Sauce',
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 12,
                               ),
                             ),
                           ],
@@ -507,18 +491,12 @@ class _HomePageState extends ConsumerState<HomePage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const SizedBox(
-                              width: 22,
-                              height: 18,
-                              child: Center(
-                                child: Icon(
-                                  Icons.restaurant,
-                                  size: 16,
-                                  color: Colors.black54,
-                                ),
-                              ),
+                            const Icon(
+                              Icons.restaurant,
+                              size: 14,
+                              color: Colors.black54,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 6),
                             // Pallino verde / rosso per cucina
                             Container(
                               width: 8,
@@ -532,27 +510,18 @@ class _HomePageState extends ConsumerState<HomePage> {
                               ),
                             ),
                             const SizedBox(width: 6),
-                            SizedBox(
-                              width: 92,
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  homeData.isKitchenOpen
-                                      ? 'Cucina Aperta'
-                                      : 'Cucina Chiusa',
-                                  maxLines: 1,
-                                  softWrap: false,
-                                  style: const TextStyle(
-                                    fontFamily: 'Open Sauce',
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13,
-                                    color: Colors.black87,
-                                  ),
-                                ),
+                            Text(
+                              homeData.isKitchenOpen
+                                  ? 'Cucina Aperta'
+                                  : 'Cucina Chiusa',
+                              style: const TextStyle(
+                                fontFamily: 'Open Sauce',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: Colors.black87,
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             // Pallino grigio per cucina
                             Container(
                               width: 8,
@@ -563,21 +532,15 @@ class _HomePageState extends ConsumerState<HomePage> {
                               ),
                             ),
                             const SizedBox(width: 6),
-                            SizedBox(
-                              width: 94,
-                              child: Text(
-                                homeData.isKitchenOpen
-                                    ? 'Fino alle ${homeData.kitchenClosingTime}'
-                                    : 'Apre alle ${homeData.kitchenOpeningTime}',
-                                maxLines: 1,
-                                softWrap: false,
-                                style: const TextStyle(
-                                  fontFamily: 'Open Sauce',
-                                  color: Colors.black54,
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 12,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                            Text(
+                              homeData.isKitchenOpen
+                                  ? 'Fino alle ${homeData.kitchenClosingTime}'
+                                  : 'Apre alle ${homeData.kitchenOpeningTime}',
+                              style: const TextStyle(
+                                fontFamily: 'Open Sauce',
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 12,
                               ),
                             ),
                           ],
@@ -743,9 +706,11 @@ class _HomePageState extends ConsumerState<HomePage> {
     required String actionText,
     required Color actionColor,
     required int itemsCount,
+    required String emptyText,
     required IndexedWidgetBuilder itemBuilder,
   }) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -792,17 +757,224 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
         ),
         const SizedBox(height: 16),
-        SizedBox(
-          height: 320, // Altezza listview proporzionale alle card più grandi
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            scrollDirection: Axis.horizontal,
-            itemCount: itemsCount,
-            separatorBuilder: (context, index) => const SizedBox(width: 12),
-            itemBuilder: itemBuilder,
+        if (itemsCount == 0)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Text(
+                emptyText,
+                style: const TextStyle(color: Colors.grey),
+              ),
+            ),
+          )
+        else
+          SizedBox(
+            height: 320, // Altezza listview proporzionale alle card più grandi
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              scrollDirection: Axis.horizontal,
+              itemCount: itemsCount,
+              separatorBuilder: (context, index) => const SizedBox(width: 12),
+              itemBuilder: itemBuilder,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildPostsSection(BuildContext context, List<HomePost> posts) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Bacheca',
+                style: TextStyle(
+                  fontFamily: 'Open Sauce',
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+            ],
           ),
         ),
+        const SizedBox(height: 16),
+        if (posts.isEmpty)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.0),
+              child: Text(
+                'Nessun avviso negli ultimi 7 giorni',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+          )
+        else
+          SizedBox(
+            height: 176,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              scrollDirection: Axis.horizontal,
+              itemCount: posts.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final post = posts[index];
+                return GestureDetector(
+                  onTap: () => _showPostSheet(context, post),
+                  child: Container(
+                    width: 268,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: purpleColor.withOpacity(0.55),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: purpleColor.withOpacity(0.14),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                Icons.campaign_outlined,
+                                size: 18,
+                                color: purpleColor,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                post.createdAt,
+                                style: const TextStyle(
+                                  fontFamily: 'Open Sauce',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF6B7280),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          post.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontFamily: 'Open Sauce',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1F2937),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Expanded(
+                          child: Text(
+                            post.message,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: 'Open Sauce',
+                              fontSize: 13.5,
+                              height: 1.35,
+                              color: Color(0xFF4B5563),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
       ],
+    );
+  }
+
+  void _showPostSheet(BuildContext context, HomePost post) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (post.createdAt.isNotEmpty)
+                Text(
+                  post.createdAt,
+                  style: TextStyle(
+                    fontFamily: 'Open Sauce',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: purpleColor,
+                  ),
+                ),
+              const SizedBox(height: 6),
+              Text(
+                post.title,
+                style: const TextStyle(
+                  fontFamily: 'Open Sauce',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Text(
+                    post.message,
+                    style: const TextStyle(
+                      fontFamily: 'Open Sauce',
+                      fontSize: 15,
+                      height: 1.5,
+                      color: Color(0xFF374151),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

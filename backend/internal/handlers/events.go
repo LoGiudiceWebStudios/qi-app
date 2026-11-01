@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"path/filepath"
+	"sort"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -25,12 +26,13 @@ func GetEvents(c *gin.Context) {
 	filtered := make([]models.Event, 0, len(events))
 	for _, event := range events {
 		if eventvisibility.IsActive(event, now) {
-			if event.RicorrenzaGiorno >= 0 {
-				event.DataEvento = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-			}
+			event.DataEvento = eventvisibility.EffectiveDate(event, now)
 			filtered = append(filtered, event)
 		}
 	}
+	sort.SliceStable(filtered, func(i, j int) bool {
+		return filtered[i].DataEvento.Before(filtered[j].DataEvento)
+	})
 
 	// Normalizza i path delle immagini per chi usa vecchi dati
 	for i := range filtered {

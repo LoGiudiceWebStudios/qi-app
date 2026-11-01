@@ -6,6 +6,8 @@ class OfferModel {
   final String? termsText;
   final String actionText;
   final String code;
+  final bool isActive;
+  final String activationLabel;
 
   const OfferModel({
     required this.id,
@@ -15,6 +17,8 @@ class OfferModel {
     required this.termsText,
     required this.actionText,
     required this.code,
+    this.isActive = true,
+    this.activationLabel = '',
   });
 
   factory OfferModel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +30,8 @@ class OfferModel {
       termsText: json['termsText']?.toString(),
       actionText: (json['actionText'] ?? 'Get Code').toString(),
       code: (json['code'] ?? '').toString(),
+      isActive: json['isActive'] as bool? ?? true,
+      activationLabel: (json['activationLabel'] ?? '').toString(),
     );
   }
 }

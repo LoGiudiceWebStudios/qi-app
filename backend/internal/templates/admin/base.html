@@ -97,6 +97,49 @@
         sidebar.classList.toggle('-translate-x-full');
         overlay.classList.toggle('hidden');
     }
+
+    document.querySelectorAll('.overflow-x-auto').forEach((tableViewport) => {
+        if (!tableViewport.querySelector('table')) return;
+
+        const topScrollbar = document.createElement('div');
+        topScrollbar.setAttribute('role', 'region');
+        topScrollbar.setAttribute('aria-label', 'Scorrimento orizzontale tabella');
+        topScrollbar.tabIndex = 0;
+        topScrollbar.style.cssText = 'height:18px; overflow-x:auto; overflow-y:hidden; margin-bottom:8px;';
+
+        const scrollbarContent = document.createElement('div');
+        scrollbarContent.style.cssText = 'height:1px;';
+        topScrollbar.appendChild(scrollbarContent);
+        tableViewport.parentNode.insertBefore(topScrollbar, tableViewport);
+
+        const updateScrollbar = () => {
+            scrollbarContent.style.width = `${tableViewport.scrollWidth}px`;
+            topScrollbar.hidden = tableViewport.scrollWidth <= tableViewport.clientWidth;
+            if (topScrollbar.scrollLeft !== tableViewport.scrollLeft) {
+                topScrollbar.scrollLeft = tableViewport.scrollLeft;
+            }
+        };
+
+        topScrollbar.addEventListener('scroll', () => {
+            if (tableViewport.scrollLeft !== topScrollbar.scrollLeft) {
+                tableViewport.scrollLeft = topScrollbar.scrollLeft;
+            }
+        });
+        tableViewport.addEventListener('scroll', () => {
+            if (topScrollbar.scrollLeft !== tableViewport.scrollLeft) {
+                topScrollbar.scrollLeft = tableViewport.scrollLeft;
+            }
+        });
+
+        updateScrollbar();
+        if ('ResizeObserver' in window) {
+            const resizeObserver = new ResizeObserver(updateScrollbar);
+            resizeObserver.observe(tableViewport);
+            resizeObserver.observe(tableViewport.querySelector('table'));
+        } else {
+            window.addEventListener('resize', updateScrollbar);
+        }
+    });
 </script>
 
 </body>

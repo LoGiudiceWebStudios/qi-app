@@ -594,7 +594,7 @@ class _ScanPageState extends State<ScanPage> {
                                   fontSize: 27,
                                 ),
                               ),
-                              const TextSpan(text: ' qi points\ndisponibili'),
+                              const TextSpan(text: ' \nqi neuroni\ndisponibili'),
                             ],
                           ),
                         ),

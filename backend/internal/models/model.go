@@ -100,6 +100,14 @@ type ScheduledNotification struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
+type SentNotification struct {
+	ID        uint           `gorm:"primaryKey" json:"id"`
+	Title     string         `gorm:"size:200;not null" json:"title"`
+	Message   string         `gorm:"type:text;not null" json:"message"`
+	CreatedAt time.Time      `gorm:"index" json:"created_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
 type PendingRegistration struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
 	Email     string    `gorm:"size:255;uniqueIndex;not null" json:"email"`

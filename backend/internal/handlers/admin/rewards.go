@@ -141,9 +141,7 @@ func (h *RewardsHandler) CreatePost(c *gin.Context) {
 		for _, u := range users {
 			tokens = append(tokens, u.FCMToken)
 		}
-		if len(tokens) > 0 {
-			services.SendMulticastNotification("Nuovo Premio Caricato!", "È disponibile un nuovo premio: "+titolo, tokens)
-		}
+		services.SendMulticastNotification("Nuovo Premio Caricato!", "È disponibile un nuovo premio: "+titolo, tokens)
 	}
 
 	c.Redirect(http.StatusSeeOther, "/admin/rewards")

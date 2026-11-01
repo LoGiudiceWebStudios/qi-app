@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"qi-backend/internal/database"
+	"qi-backend/internal/eventvisibility"
 	"qi-backend/internal/models"
 
 	"github.com/gin-gonic/gin"
@@ -51,9 +52,16 @@ func (h *DashboardHandler) RenderDashboard(c *gin.Context) {
 	now := time.Now()
 	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
+	var candidateEvents []models.Event
 	var totalEvents int64
-	if err := database.DB.Model(&models.Event{}).Where("data_evento >= ?", startOfToday).Count(&totalEvents).Error; err != nil {
+	if err := database.DB.Where("data_evento >= ? OR ricorrenza_giorno >= 0", startOfToday.Add(-12*time.Hour)).Find(&candidateEvents).Error; err != nil {
 		log.Printf("Errore conteggio eventi attivi: %v", err)
+	} else {
+		for _, ev := range candidateEvents {
+			if eventvisibility.IsActive(ev, now) {
+				totalEvents++
+			}
+		}
 	}
 
 	var totalOffers int64

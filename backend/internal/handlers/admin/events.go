@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"qi-backend/internal/database"
+	"qi-backend/internal/eventvisibility"
 	"qi-backend/internal/models"
 	"qi-backend/internal/services"
 )
@@ -26,8 +27,12 @@ func (h *EventsHandler) RenderEvents(c *gin.Context) {
 	var events []models.Event
 	database.DB.Order("data_evento desc").Find(&events)
 
-	// Fix path slashes per eventi vecchi rimasti nel database
+	now := time.Now()
+	// Fix path slashes per eventi vecchi rimasti nel database e aggiorna la data degli eventi ricorrenti
 	for i := range events {
+		if events[i].RicorrenzaGiorno >= 0 && events[i].RicorrenzaGiorno <= 6 {
+			events[i].DataEvento = eventvisibility.EffectiveDate(events[i], now)
+		}
 		if len(events[i].ImmagineURL) > 0 {
 			events[i].ImmagineURL = filepath.ToSlash(events[i].ImmagineURL)
 			if !strings.HasPrefix(events[i].ImmagineURL, "http") {

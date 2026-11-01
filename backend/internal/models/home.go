@@ -1,4 +1,4 @@
-﻿package models
+package models
 
 type HomeEvent struct {
 	ID       string `json:"id"`
@@ -8,19 +8,30 @@ type HomeEvent struct {
 }
 
 type HomeOffer struct {
-	ID       string `json:"id"`
-	Title    string `json:"title"`
-	ImageUrl string `json:"imageUrl"`
+	ID              string `json:"id"`
+	Title           string `json:"title"`
+	ImageUrl        string `json:"imageUrl"`
+	IsActive        bool   `json:"isActive"`
+	ActivationLabel string `json:"activationLabel,omitempty"`
+}
+
+type HomePost struct {
+	ID        string `json:"id"`
+	Title     string `json:"title"`
+	Message   string `json:"message"`
+	CreatedAt string `json:"createdAt"`
 }
 
 type OfferAPI struct {
-	ID          string  `json:"id"`
-	ImageURL    string  `json:"imageUrl"`
-	Title       string  `json:"title"`
-	Description string  `json:"description"`
-	TermsText   *string `json:"termsText,omitempty"`
-	ActionText  string  `json:"actionText"`
-	Code        string  `json:"code"`
+	ID              string  `json:"id"`
+	ImageURL        string  `json:"imageUrl"`
+	Title           string  `json:"title"`
+	Description     string  `json:"description"`
+	TermsText       *string `json:"termsText,omitempty"`
+	ActionText      string  `json:"actionText"`
+	Code            string  `json:"code"`
+	IsActive        bool    `json:"isActive"`
+	ActivationLabel string  `json:"activationLabel,omitempty"`
 }
 
 type HomeData struct {
@@ -34,4 +45,5 @@ type HomeData struct {
 	NextEvent          string      `json:"nextEvent"`
 	Events             []HomeEvent `json:"events"`
 	Offers             []HomeOffer `json:"offers"`
+	Posts              []HomePost  `json:"posts"`
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 
 	"qi-backend/internal/database"
 	"qi-backend/internal/models"
+	"qi-backend/internal/offervisibility"
 )
 
 func GetOffers(c *gin.Context) {
@@ -18,20 +20,32 @@ func GetOffers(c *gin.Context) {
 	now := time.Now()
 	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
-	if err := database.DB.Where("(valida_dal <= ? AND valida_fino >= ?) OR ricorrenza_giorno >= 0", now, startOfDay).Order("valida_fino ASC").Find(&offers).Error; err != nil {
+	if err := database.DB.Where("valida_fino >= ?", startOfDay).Order("valida_dal ASC, valida_fino ASC").Find(&offers).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse("Impossibile recuperare le offerte", "errore_database"))
 		return
 	}
 
-	filteredOffers := make([]models.Offer, 0, len(offers))
+	type visibleOffer struct {
+		offer  models.Offer
+		status offervisibility.Status
+	}
+	visibleOffers := make([]visibleOffer, 0, len(offers))
 	for _, offer := range offers {
-		if offerIsActiveNow(offer, now) {
-			filteredOffers = append(filteredOffers, offer)
+		status := offervisibility.Evaluate(offer, now)
+		if status.Visible {
+			visibleOffers = append(visibleOffers, visibleOffer{offer: offer, status: status})
 		}
 	}
+	sort.SliceStable(visibleOffers, func(i, j int) bool {
+		if visibleOffers[i].status.Active != visibleOffers[j].status.Active {
+			return visibleOffers[i].status.Active
+		}
+		return visibleOffers[i].status.NextActivationAt.Before(visibleOffers[j].status.NextActivationAt)
+	})
 
-	payload := make([]models.OfferAPI, 0, len(filteredOffers))
-	for _, offer := range filteredOffers {
+	payload := make([]models.OfferAPI, 0, len(visibleOffers))
+	for _, item := range visibleOffers {
+		offer := item.offer
 		imgURL := normalizeOfferImageURL(c, offer.ImmagineURL)
 		actionText := "Get Code"
 		if strings.TrimSpace(offer.CodiceSconto) == "" {
@@ -41,41 +55,28 @@ func GetOffers(c *gin.Context) {
 		if strings.TrimSpace(offer.OraValidaDal) != "" && strings.TrimSpace(offer.OraValidaFino) != "" {
 			terms += fmt.Sprintf(" Attiva ogni giorno dalle %s alle %s.", offer.OraValidaDal, offer.OraValidaFino)
 		}
+		if offer.RicorrenzaGiorno >= 0 && offer.RicorrenzaGiorno <= 6 {
+			terms += " Ricorrente ogni " + []string{"domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"}[offer.RicorrenzaGiorno] + "."
+		}
 		terms += " Verifica disponibilita in cassa prima dell'uso."
-		payload = append(payload, models.OfferAPI{ID: fmt.Sprintf("%d", offer.ID), ImageURL: imgURL, Title: offer.Titolo, Description: offer.Descrizione, TermsText: &terms, ActionText: actionText, Code: offer.CodiceSconto})
+		payload = append(payload, models.OfferAPI{
+			ID:              fmt.Sprintf("%d", offer.ID),
+			ImageURL:        imgURL,
+			Title:           offer.Titolo,
+			Description:     offer.Descrizione,
+			TermsText:       &terms,
+			ActionText:      actionText,
+			Code:            offer.CodiceSconto,
+			IsActive:        item.status.Active,
+			ActivationLabel: item.status.ActivationLabel,
+		})
 	}
 
 	c.JSON(http.StatusOK, models.SuccessResponse("Offerte recuperate con successo", payload))
 }
 
 func offerIsActiveNow(offer models.Offer, now time.Time) bool {
-	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	if offer.RicorrenzaGiorno < 0 && (offer.ValidaDal.After(now) || offer.ValidaFino.Before(startOfToday)) {
-		return false
-	}
-	if offer.RicorrenzaGiorno >= 0 && int(now.Weekday()) != offer.RicorrenzaGiorno {
-		return false
-	}
-
-	start, startErr := time.Parse("15:04", strings.TrimSpace(offer.OraValidaDal))
-	end, endErr := time.Parse("15:04", strings.TrimSpace(offer.OraValidaFino))
-	if startErr != nil || endErr != nil || (strings.TrimSpace(offer.OraValidaDal) == "" && strings.TrimSpace(offer.OraValidaFino) == "") {
-		return true
-	}
-
-	currentMinutes := now.Hour()*60 + now.Minute()
-	startMinutes := start.Hour()*60 + start.Minute()
-	endMinutes := end.Hour()*60 + end.Minute()
-
-	if startMinutes == endMinutes {
-		return true
-	}
-
-	if startMinutes < endMinutes {
-		return currentMinutes >= startMinutes && currentMinutes <= endMinutes
-	}
-
-	return currentMinutes >= startMinutes || currentMinutes <= endMinutes
+	return offervisibility.Evaluate(offer, now).Active
 }
 
 func normalizeOfferImageURL(c *gin.Context, raw string) string {

@@ -3,12 +3,14 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
 	"qi-backend/internal/database"
 	"qi-backend/internal/eventvisibility"
 	"qi-backend/internal/models"
+	"qi-backend/internal/offervisibility"
 )
 
 type HomeService struct {
@@ -136,24 +138,33 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 	eventCutoff := nowT.Add(-12 * time.Hour)
 	eventCutoff = time.Date(eventCutoff.Year(), eventCutoff.Month(), eventCutoff.Day(), 0, 0, 0, 0, loc)
 	database.DB.Where("data_evento >= ? OR ricorrenza_giorno >= 0", eventCutoff).Order("data_evento asc").Find(&events)
-	var homeEvents []models.HomeEvent
+
+	type homeEventCandidate struct {
+		event models.Event
+		date  time.Time
+	}
+	candidates := make([]homeEventCandidate, 0, len(events))
 	for _, e := range events {
 		if !eventvisibility.IsActive(e, nowT) {
 			continue
 		}
-		date := e.DataEvento
-		if e.RicorrenzaGiorno >= 0 {
-			date = time.Date(nowT.Year(), nowT.Month(), nowT.Day(), 0, 0, 0, 0, nowT.Location())
-		}
-		homeEvents = append(homeEvents, models.HomeEvent{
-			ID:       fmt.Sprint(e.ID),
-			Title:    e.Titolo,
-			ImageUrl: e.ImmagineURL,
-			Date:     date.Format("2006-01-02"),
+		candidates = append(candidates, homeEventCandidate{
+			event: e,
+			date:  eventvisibility.EffectiveDate(e, nowT),
 		})
-		if len(homeEvents) == 3 {
-			break
-		}
+	}
+	sort.SliceStable(candidates, func(i, j int) bool {
+		return candidates[i].date.Before(candidates[j].date)
+	})
+
+	var homeEvents []models.HomeEvent
+	for _, c := range candidates {
+		homeEvents = append(homeEvents, models.HomeEvent{
+			ID:       fmt.Sprint(c.event.ID),
+			Title:    c.event.Titolo,
+			ImageUrl: c.event.ImmagineURL,
+			Date:     c.date.Format("2006-01-02"),
+		})
 	}
 	if len(homeEvents) == 0 {
 		homeEvents = []models.HomeEvent{}
@@ -163,20 +174,35 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 	var offers []models.Offer
 	nowOff := time.Now()
 	startOfDayOff := time.Date(nowOff.Year(), nowOff.Month(), nowOff.Day(), 0, 0, 0, 0, nowOff.Location())
-	database.DB.Where("(valida_dal <= ? AND valida_fino >= ?) OR ricorrenza_giorno >= 0", nowOff, startOfDayOff).Order("valida_fino asc, id asc").Find(&offers)
+	database.DB.Where("valida_fino >= ?", startOfDayOff).Order("valida_dal asc, valida_fino asc, id asc").Find(&offers)
+	type homeOfferWithStatus struct {
+		offer  models.Offer
+		status offervisibility.Status
+	}
+	visibleOffers := make([]homeOfferWithStatus, 0, len(offers))
+	for _, offer := range offers {
+		status := offervisibility.Evaluate(offer, nowOff)
+		if status.Visible {
+			visibleOffers = append(visibleOffers, homeOfferWithStatus{offer: offer, status: status})
+		}
+	}
+	sort.SliceStable(visibleOffers, func(i, j int) bool {
+		if visibleOffers[i].status.Active != visibleOffers[j].status.Active {
+			return visibleOffers[i].status.Active
+		}
+		return visibleOffers[i].status.NextActivationAt.Before(visibleOffers[j].status.NextActivationAt)
+	})
+
 	var homeOffers []models.HomeOffer
-	for _, o := range offers {
-		if !offerIsActiveNow(o, nowOff) {
-			continue
-		}
+	for _, item := range visibleOffers {
+		o := item.offer
 		homeOffers = append(homeOffers, models.HomeOffer{
-			ID:       fmt.Sprint(o.ID),
-			Title:    o.Titolo,
-			ImageUrl: o.ImmagineURL,
+			ID:              fmt.Sprint(o.ID),
+			Title:           o.Titolo,
+			ImageUrl:        o.ImmagineURL,
+			IsActive:        item.status.Active,
+			ActivationLabel: item.status.ActivationLabel,
 		})
-		if len(homeOffers) == 3 {
-			break
-		}
 	}
 	if len(homeOffers) == 0 {
 		homeOffers = []models.HomeOffer{}
@@ -185,6 +211,21 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 	nextEventTitle := "Nessun evento in programma"
 	if len(homeEvents) > 0 {
 		nextEventTitle = homeEvents[0].Title
+	}
+
+	// Recuperiamo le notifiche/post degli ultimi 7 giorni
+	var sentNotifications []models.SentNotification
+	weekAgo := nowT.AddDate(0, 0, -7)
+	database.DB.Where("created_at >= ?", weekAgo).Order("created_at desc, id desc").Limit(20).Find(&sentNotifications)
+	homePosts := make([]models.HomePost, 0, len(sentNotifications))
+	for _, n := range sentNotifications {
+		createdLocal := n.CreatedAt.In(loc)
+		homePosts = append(homePosts, models.HomePost{
+			ID:        fmt.Sprint(n.ID),
+			Title:     n.Title,
+			Message:   n.Message,
+			CreatedAt: createdLocal.Format("02/01 · 15:04"),
+		})
 	}
 
 	return &models.HomeData{
@@ -198,35 +239,6 @@ func (s *HomeService) GetHomeData() (*models.HomeData, error) {
 		NextEvent:          nextEventTitle,
 		Events:             homeEvents,
 		Offers:             homeOffers,
+		Posts:              homePosts,
 	}, nil
-}
-
-func offerIsActiveNow(offer models.Offer, now time.Time) bool {
-	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	if offer.RicorrenzaGiorno < 0 && (offer.ValidaDal.After(now) || offer.ValidaFino.Before(startOfToday)) {
-		return false
-	}
-	if offer.RicorrenzaGiorno >= 0 && int(now.Weekday()) != offer.RicorrenzaGiorno {
-		return false
-	}
-
-	start, startErr := time.Parse("15:04", strings.TrimSpace(offer.OraValidaDal))
-	end, endErr := time.Parse("15:04", strings.TrimSpace(offer.OraValidaFino))
-	if startErr != nil || endErr != nil || (strings.TrimSpace(offer.OraValidaDal) == "" && strings.TrimSpace(offer.OraValidaFino) == "") {
-		return true
-	}
-
-	currentMinutes := now.Hour()*60 + now.Minute()
-	startMinutes := start.Hour()*60 + start.Minute()
-	endMinutes := end.Hour()*60 + end.Minute()
-
-	if startMinutes == endMinutes {
-		return true
-	}
-
-	if startMinutes < endMinutes {
-		return currentMinutes >= startMinutes && currentMinutes <= endMinutes
-	}
-
-	return currentMinutes >= startMinutes || currentMinutes <= endMinutes
 }

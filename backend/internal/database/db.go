@@ -60,6 +60,7 @@ func Connect() {
 		&models.PointsTransaction{},
 		&models.Reward{},
 		&models.ScheduledNotification{},
+		&models.SentNotification{},
 		&models.PendingRegistration{},
 	)
 	if err != nil {

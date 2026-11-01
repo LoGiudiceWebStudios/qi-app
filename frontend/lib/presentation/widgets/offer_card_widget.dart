@@ -29,117 +29,171 @@ class OfferCardWidget extends StatelessWidget {
           ),
         ],
       ),
-      child: ClipPath(
-        clipper: TicketClipper(cutoutY: cutoutY),
-        child: Container(
-          color: Colors.white,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Immagine con zig zag a denti quadrati al fondo
-              SizedBox(
-                height: cutoutY,
-                child: Stack(
+      child: Stack(
+        children: [
+          Opacity(
+            opacity: offer.isActive ? 1 : 0.62,
+            child: ClipPath(
+              clipper: TicketClipper(cutoutY: cutoutY),
+              child: Container(
+                color: Colors.white,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Positioned.fill(
-                      child: Image.network(
-                        offer.imageUrl.startsWith('http')
-                            ? offer.imageUrl
-                            : "${ApiService.serverUrl}${offer.imageUrl.startsWith('/') ? '' : '/'}${offer.imageUrl.replaceAll('\\', '/')}",
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: Colors.grey[300],
-                          alignment: Alignment.center,
-                          child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                    // Immagine con zig zag a denti quadrati al fondo
+                    SizedBox(
+                      height: cutoutY,
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: Image.network(
+                              offer.imageUrl.startsWith('http')
+                                  ? offer.imageUrl
+                                  : "${ApiService.serverUrl}${offer.imageUrl.startsWith('/') ? '' : '/'}${offer.imageUrl.replaceAll('\\', '/')}",
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (context, error, stackTrace) => Container(
+                                    color: Colors.grey[300],
+                                    alignment: Alignment.center,
+                                    child: const Icon(
+                                      Icons.image_not_supported,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            height: 5, // Abbassato da 12 a 5
+                            child: ClipPath(
+                              clipper: SquareTeethClipper(toothWidth: 10.0),
+                              child: Container(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Parte Testuale
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          20.0,
+                          16.0,
+                          20.0,
+                          16.0,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment:
+                              MainAxisAlignment
+                                  .spaceBetween, // Distribuisce spazi separando le righe
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  offer.title,
+                                  style: const TextStyle(
+                                    fontFamily: 'Open Sauce',
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF1F2937),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  offer.description,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontFamily: 'Open Sauce',
+                                    fontSize: 16,
+                                    color: Color(0xFF374151),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (termsText.isNotEmpty)
+                              GestureDetector(
+                                onTap: onTermsTap,
+                                child: Text(
+                                  termsText.startsWith('*')
+                                      ? termsText
+                                      : '*$termsText',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontFamily: 'Open Sauce',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFFE9B416),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     ),
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: 5, // Abbassato da 12 a 5
-                      child: ClipPath(
-                        clipper: SquareTeethClipper(toothWidth: 10.0),
-                        child: Container(color: Colors.white),
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Color(0xFFE5E7EB),
+                    ),
+                    InkWell(
+                      onTap: offer.isActive ? onGetCodeTap : null,
+                      child: SizedBox(
+                        height: 56,
+                        child: Center(
+                          child: Text(
+                            offer.isActive ? 'Get Code' : 'Non ancora attiva',
+                            style: TextStyle(
+                              fontFamily: 'Open Sauce',
+                              fontSize: offer.isActive ? 18 : 14,
+                              fontWeight: FontWeight.w700,
+                              color:
+                                  offer.isActive
+                                      ? const Color(0xFF1F2937)
+                                      : const Color(0xFF6B7280),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              // Parte Testuale
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween, // Distribuisce spazi separando le righe
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            offer.title,
-                            style: const TextStyle(
-                              fontFamily: 'Open Sauce',
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF1F2937),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            offer.description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontFamily: 'Open Sauce',
-                              fontSize: 16,
-                              color: Color(0xFF374151),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (termsText.isNotEmpty)
-                        GestureDetector(
-                          onTap: onTermsTap,
-                          child: Text(
-                            termsText.startsWith('*') ? termsText : '*$termsText',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontFamily: 'Open Sauce',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFFE9B416),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-              const Divider(height: 1, thickness: 1, color: Color(0xFFE5E7EB)),
-              InkWell(
-                onTap: onGetCodeTap,
-                child: SizedBox(
-                  height: 56,
-                  child: Center(
-                    child: const Text(
-                      'Get Code',
-                      style: TextStyle(
-                        fontFamily: 'Open Sauce',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1F2937),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+          if (!offer.isActive && offer.activationLabel.isNotEmpty)
+            Positioned(
+              top: 14,
+              left: 14,
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 250),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF8D8),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE9B416)),
+                ),
+                child: Text(
+                  'Attiva ${offer.activationLabel}',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF594500),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -174,7 +228,7 @@ class TicketClipper extends CustomClipper<Path> {
     path.quadraticBezierTo(0, 0, cornerRadius, 0);
     path.lineTo(size.width - cornerRadius, 0);
     path.quadraticBezierTo(size.width, 0, size.width, cornerRadius);
-    
+
     // Semicerchio destro
     path.lineTo(size.width, cutoutY - cutoutRadius);
     path.arcToPoint(
@@ -182,13 +236,18 @@ class TicketClipper extends CustomClipper<Path> {
       radius: Radius.circular(cutoutRadius),
       clockwise: false,
     );
-    
+
     path.lineTo(size.width, size.height - cornerRadius);
-    path.quadraticBezierTo(size.width, size.height, size.width - cornerRadius, size.height);
-    
+    path.quadraticBezierTo(
+      size.width,
+      size.height,
+      size.width - cornerRadius,
+      size.height,
+    );
+
     path.lineTo(cornerRadius, size.height);
     path.quadraticBezierTo(0, size.height, 0, size.height - cornerRadius);
-    
+
     // Semicerchio sinistro
     path.lineTo(0, cutoutY + cutoutRadius);
     path.arcToPoint(
@@ -196,7 +255,7 @@ class TicketClipper extends CustomClipper<Path> {
       radius: Radius.circular(cutoutRadius),
       clockwise: false,
     );
-    
+
     path.close();
     return path;
   }
@@ -214,16 +273,16 @@ class SquareTeethClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     Path path = Path();
     double h = size.height;
-    
+
     path.moveTo(0, h);
     path.lineTo(0, 0);
-    
+
     int numTeeth = (size.width / (toothWidth * 2)).ceil();
     for (int i = 0; i < numTeeth; i++) {
       double x = i * toothWidth * 2;
       path.lineTo(x + toothWidth, 0);
       path.lineTo(x + toothWidth, h);
-      
+
       if (i < numTeeth - 1) {
         path.lineTo(x + toothWidth * 2, h);
         path.lineTo(x + toothWidth * 2, 0);

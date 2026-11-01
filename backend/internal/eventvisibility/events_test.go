@@ -59,27 +59,30 @@ func TestIsActiveForSingleEvents(t *testing.T) {
 	}
 }
 
-func TestRecurringEventIsVisibleEveryDay(t *testing.T) {
+func TestRecurringEventIsAlwaysVisibleAndAdvancesDateAfter12Hours(t *testing.T) {
 	location := eventLocation
-	now := time.Date(2026, time.October, 16, 12, 0, 0, 0, location)
+	// 16 October 2026 is a Friday (Weekday == 5)
+	fridayNoon := time.Date(2026, time.October, 16, 12, 0, 0, 0, location)
 	event := models.Event{
 		DataEvento:       time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC),
 		Ora:              "09:00",
-		RicorrenzaGiorno: 1,
-		CreatedAt:        now.Add(-24 * time.Hour),
+		RicorrenzaGiorno: int(time.Friday),
+		CreatedAt:        fridayNoon.Add(-24 * time.Hour),
 	}
 
-	if !IsActive(event, now) {
-		t.Fatal("expected recurring event to be active within twelve hours of today's occurrence")
+	if !IsActive(event, fridayNoon) {
+		t.Fatal("expected recurring event to be active")
+	}
+	if got := EffectiveDate(event, fridayNoon).Format("2006-01-02"); got != "2026-10-16" {
+		t.Fatalf("EffectiveDate() within 12h = %s, want 2026-10-16", got)
 	}
 
-	nextDay := time.Date(2026, time.October, 17, 8, 0, 0, 0, location)
-	if !IsActive(event, nextDay) {
-		t.Fatal("expected recurring event to be visible the following day")
+	// After 12 hours from Friday 09:00 -> Friday 21:01, date should roll to next Friday (2026-10-23)
+	afterWindow := time.Date(2026, time.October, 16, 21, 1, 0, 0, location)
+	if !IsActive(event, afterWindow) {
+		t.Fatal("expected recurring event to stay active for the next week")
 	}
-
-	afterOccurrenceWindow := time.Date(2026, time.October, 17, 21, 1, 0, 0, location)
-	if IsActive(event, afterOccurrenceWindow) {
-		t.Fatal("expected recurring event to be hidden after twelve hours from today's occurrence")
+	if got := EffectiveDate(event, afterWindow).Format("2006-01-02"); got != "2026-10-23" {
+		t.Fatalf("EffectiveDate() after 12h = %s, want 2026-10-23", got)
 	}
 }
